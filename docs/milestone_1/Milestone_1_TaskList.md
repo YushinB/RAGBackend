@@ -69,7 +69,7 @@
   - **Estimated Time**: 8 hours
   - **Priority**: High
 
-- [ ] **T2.1.2**: Implement `TableContent` class
+- [x] **T2.1.2**: Implement `TableContent` class
   - Parse table headers and rows structure
   - Handle table captions and notes
   - Implement cell relationship tracking (Excel arrows)

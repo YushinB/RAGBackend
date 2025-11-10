@@ -21,6 +21,7 @@ from .content_elements import (
     ContentRelationship,
     RelationshipType,
 )
+from .equation_content import EquationContent
 from .image_content import ImageContent
 from .table_content import CellReference, CellRelationship, TableContent
 
@@ -33,6 +34,7 @@ __all__ = [
     "ContentPosition",
     "ContentRelationship",
     "DocumentHierarchy",
+    "EquationContent",
     "ImageContent",
     "MultiModalContent",
     "RelationshipType",
