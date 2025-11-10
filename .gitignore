@@ -127,7 +127,6 @@ uploads/
 *.sqlite
 
 # Model files and weights
-models/
 weights/
 checkpoints/
 
