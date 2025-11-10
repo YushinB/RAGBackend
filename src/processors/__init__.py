@@ -9,3 +9,7 @@ This module contains processors for various document formats including:
 
 Each processor implements multi-modal content extraction with relationship preservation.
 """
+
+from .base import DataProcessor
+
+__all__ = ["DataProcessor"]
