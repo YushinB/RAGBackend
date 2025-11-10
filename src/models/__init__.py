@@ -15,11 +15,21 @@ from .base_models import (
     MultiModalContent,
     TextChunk,
 )
+from .content_elements import (
+    ContentElement,
+    ContentElementType,
+    ContentRelationship,
+    RelationshipType,
+)
 
 __all__ = [
     "ChunkType",
+    "ContentElement",
+    "ContentElementType",
     "ContentPosition",
+    "ContentRelationship",
     "DocumentHierarchy",
     "MultiModalContent",
+    "RelationshipType",
     "TextChunk",
 ]
