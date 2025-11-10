@@ -21,6 +21,7 @@ from .content_elements import (
     ContentRelationship,
     RelationshipType,
 )
+from .image_content import ImageContent
 
 __all__ = [
     "ChunkType",
@@ -29,6 +30,7 @@ __all__ = [
     "ContentPosition",
     "ContentRelationship",
     "DocumentHierarchy",
+    "ImageContent",
     "MultiModalContent",
     "RelationshipType",
     "TextChunk",
