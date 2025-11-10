@@ -1,5 +1,4 @@
-"""
-API Module
+"""API Module.
 
 This module contains the FastAPI application and route handlers:
 - Document upload and management endpoints

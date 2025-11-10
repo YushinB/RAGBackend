@@ -1,5 +1,4 @@
-"""
-Query Processing Module
+"""Query Processing Module.
 
 This module handles query processing and response generation:
 - Query processing pipeline

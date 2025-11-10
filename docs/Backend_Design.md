@@ -131,7 +131,7 @@ The core algorithm follows a three-stage process:
   - Encrypted data storage and transmission
   - Secure API endpoints with authentication and authorization
   - Data anonymization and sanitization for sensitive content
-  
+
 - **Access Control**:
   - Role-based access control (RBAC) for different user levels
   - API rate limiting and throttling

@@ -1,5 +1,4 @@
-"""
-Data Processing Module
+"""Data Processing Module.
 
 This module contains processors for various document formats including:
 - PDF documents

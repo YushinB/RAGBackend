@@ -1,5 +1,4 @@
-"""
-RAG (Retrieval-Augmented Generation) Python Backend
+"""RAG (Retrieval-Augmented Generation) Python Backend.
 
 A sophisticated RAG backend system with multi-modal document processing,
 advanced chunking strategies, and production-ready architecture.

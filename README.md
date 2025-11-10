@@ -134,4 +134,4 @@ Once the application is running, API documentation is available at:
 
 ## Support
 
-[Add support information here]" 
+[Add support information here]"

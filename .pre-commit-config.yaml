@@ -1,0 +1,79 @@
+# Pre-commit configuration for RAG Python Backend
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  # Pre-commit hooks for basic checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=10000']
+      - id: check-json
+      - id: pretty-format-json
+        args: ['--autofix']
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: debug-statements
+
+  - repo: https://github.com/psf/black
+    rev: 25.11.0
+    hooks:
+      - id: black
+        language_version: python3.13
+        args: [--line-length=88]
+
+  # Ruff linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # MyPy type checker
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+          - types-PyYAML
+          - pydantic
+        args: [--install-types, --non-interactive]
+        exclude: ^(tests/|scripts/)
+
+  # Python import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 7.0.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--filter-files"]
+
+  # Security check
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: ["-r"]
+        exclude: ^(tests/|scripts/)
+
+# Configure specific settings
+default_language_version:
+  python: python3.13
+
+# Exclude specific patterns
+exclude: |
+  (?x)^(
+      \.git/.*|
+      \.venv/.*|
+      venv/.*|
+      \.pytest_cache/.*|
+      __pycache__/.*|
+      .*\.pyc|
+      data/.*|
+      logs/.*|
+      \.env.*
+  )$

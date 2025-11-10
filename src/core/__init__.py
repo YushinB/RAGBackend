@@ -1,5 +1,4 @@
-"""
-Core Module
+"""Core Module.
 
 This module contains core application components:
 - Configuration management

@@ -1,5 +1,4 @@
-"""
-Embeddings Module
+"""Embeddings Module.
 
 This module handles text embedding generation:
 - BGE model implementation

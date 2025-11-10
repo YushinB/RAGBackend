@@ -2,8 +2,8 @@
 
 ## Overview
 
-**Milestone Duration**: 4-6 weeks  
-**Priority**: High  
+**Milestone Duration**: 4-6 weeks
+**Priority**: High
 **Goal**: Implement a robust Data Processing Module capable of handling multi-modal content with advanced relationship preservation
 
 ## Task Categories

@@ -170,22 +170,22 @@ The Data Processing Module is responsible for ingesting various file formats, ex
 
 class DataProcessor(ABC):
     """Abstract base class for all data processors"""
-    
+
     @abstractmethod
     def can_process(self, file_path: str) -> bool:
         """Check if processor can handle the file type"""
         pass
-    
+
     @abstractmethod
     def extract_text(self, file_path: str) -> str:
         """Extract raw text from file"""
         pass
-    
+
     @abstractmethod
     def extract_multimodal_content(self, file_path: str) -> MultiModalContent:
         """Extract multi-modal content including text, images, tables, equations"""
         pass
-    
+
     @abstractmethod
     def chunk_text(self, text: str, chunk_size: int, overlap: int) -> List[TextChunk]:
         """Split text into chunks with overlap"""
@@ -250,14 +250,14 @@ class TextChunk:
     relationships: List[str]  # IDs of related chunks
     multimodal_elements: List[str]  # IDs of associated images/tables/equations
     confidence_score: float  # Quality/reliability score
-    
+
 class ChunkType(Enum):
     TEXT = "text"
     MULTIMODAL = "multimodal"
     TABLE = "table"
     EQUATION = "equation"
     IMAGE_CAPTION = "image_caption"
-    
+
 class PDFProcessor(DataProcessor):
     """Processor for PDF documents"""
     pass
@@ -280,7 +280,7 @@ class TextFileProcessor(DataProcessor):
 
 class ProcessorFactory:
     """Factory for creating appropriate processor"""
-    
+
     @staticmethod
     def get_processor(file_path: str) -> DataProcessor:
         """Return appropriate processor for file type"""
@@ -310,7 +310,7 @@ class ChunkingConfig:
 #### 3.1.4 Data Flow
 
 ```text
-Input File → File Type Detection → Processor Selection → 
+Input File → File Type Detection → Processor Selection →
 Text Extraction → Chunking → Metadata Enrichment → Output Chunks
 ```
 
@@ -333,12 +333,12 @@ Convert text chunks into dense vector representations using pre-trained embeddin
 ```python
 class EmbeddingModel(ABC):
     """Abstract base for embedding models"""
-    
+
     @abstractmethod
     def encode(self, texts: List[str]) -> np.ndarray:
         """Generate embeddings for text batch"""
         pass
-    
+
     @abstractmethod
     def get_dimension(self) -> int:
         """Return embedding dimension"""
@@ -349,10 +349,10 @@ class BGEEmbedding(EmbeddingModel):
     model_name: str = "BAAI/bge-base-en-v1.5"
     dimension: int = 768
     batch_size: int = 32
-    
+
     def __init__(self):
         self.model = SentenceTransformer(self.model_name)
-    
+
     def encode(self, texts: List[str]) -> np.ndarray:
         return self.model.encode(texts, batch_size=self.batch_size)
 
@@ -364,15 +364,15 @@ class QodoEmbedding(EmbeddingModel):
 
 class EmbeddingService:
     """Service for managing embedding generation"""
-    
+
     def __init__(self, model: EmbeddingModel):
         self.model = model
         self.cache = EmbeddingCache()
-    
+
     async def embed_chunks(self, chunks: List[TextChunk]) -> List[EmbeddedChunk]:
         """Generate embeddings for text chunks"""
         pass
-    
+
     def batch_encode(self, texts: List[str]) -> np.ndarray:
         """Encode texts in batches for efficiency"""
         pass
@@ -413,23 +413,23 @@ Store and retrieve embeddings efficiently using LanceDB for similarity search op
 ```python
 class VectorDatabase:
     """LanceDB wrapper for vector operations"""
-    
+
     def __init__(self, db_path: str, table_name: str):
         self.db = lancedb.connect(db_path)
         self.table_name = table_name
-    
+
     async def insert_embeddings(self, chunks: List[EmbeddedChunk]) -> bool:
         """Insert embeddings into database"""
         pass
-    
+
     async def search(self, query_embedding: np.ndarray, top_k: int = 5) -> List[SearchResult]:
         """Perform similarity search"""
         pass
-    
+
     async def delete_by_source(self, source_file: str) -> int:
         """Delete all chunks from a source file"""
         pass
-    
+
     async def update_metadata(self, chunk_id: str, metadata: Dict) -> bool:
         """Update chunk metadata"""
         pass
@@ -465,15 +465,15 @@ class VectorSchema:
 ```python
 class QueryOptimizer:
     """Optimize vector search queries"""
-    
+
     def optimize_top_k(self, query: str, context_length: int) -> int:
         """Calculate optimal top_k based on context"""
         pass
-    
+
     def rerank_results(self, results: List[SearchResult], query: str) -> List[SearchResult]:
         """Re-rank results using cross-encoder"""
         pass
-    
+
     def filter_by_metadata(self, results: List[SearchResult], filters: Dict) -> List[SearchResult]:
         """Apply metadata filters"""
         pass
@@ -500,8 +500,8 @@ Process user queries, retrieve relevant context, construct prompts for LLM gener
 ```python
 class QueryProcessor:
     """Main query processing orchestrator with conflict resolution"""
-    
-    def __init__(self, embedding_service: EmbeddingService, 
+
+    def __init__(self, embedding_service: EmbeddingService,
                  vector_db: VectorDatabase,
                  llm_client: LLMClient,
                  conflict_detector: ConflictDetector,
@@ -512,33 +512,33 @@ class QueryProcessor:
         self.prompt_builder = PromptBuilder()
         self.conflict_detector = conflict_detector
         self.source_ranker = source_ranker
-    
+
     async def process_query(self, query: str, config: QueryConfig) -> QueryResult:
         """Process complete query pipeline with conflict resolution"""
         pass
-    
+
     async def retrieve_context(self, query_embedding: np.ndarray, top_k: int) -> List[SearchResult]:
         """Retrieve relevant context from vector DB"""
         pass
-    
+
     def detect_conflicts(self, contexts: List[SearchResult]) -> ConflictAnalysis:
         """Detect conflicting information in retrieved contexts"""
         pass
-    
+
     def resolve_conflicts(self, conflicts: ConflictAnalysis) -> ConflictResolution:
         """Resolve conflicts using configured strategies"""
         pass
 
 class ConflictDetector:
     """Detect contradictory information across documents"""
-    
+
     def analyze_conflicts(self, contexts: List[SearchResult]) -> ConflictAnalysis:
         """Analyze contexts for conflicts and contradictions"""
         pass
 
 class SourceRanker:
     """Rank sources based on authority, recency, and reliability"""
-    
+
     def rank_sources(self, contexts: List[SearchResult]) -> List[RankedSource]:
         """Rank sources using multiple criteria"""
         pass
@@ -577,17 +577,17 @@ class ResolutionStrategy(Enum):
 
 class PromptBuilder:
     """Construct prompts for LLM with conflict awareness"""
-    
-    def build_prompt(self, query: str, context: List[TextChunk], 
+
+    def build_prompt(self, query: str, context: List[TextChunk],
                     system_prompt: str = None,
                     conflicts: Optional[ConflictResolution] = None) -> str:
         """Build enhanced prompt with conflict resolution information"""
         pass
-    
+
     def format_context(self, chunks: List[TextChunk]) -> str:
         """Format retrieved chunks for context"""
         pass
-    
+
     def format_conflict_info(self, resolution: ConflictResolution) -> str:
         """Format conflict resolution information for prompt"""
         pass
@@ -606,7 +606,7 @@ class QueryConfig:
         "authority": 0.4,
         "relevance": 0.3
     }
-    
+
 class QueryResult:
     """Complete query result with conflict information"""
     query: str
@@ -653,19 +653,19 @@ Interface with LLM models through Rust library for efficient response generation
 ```python
 class LLMClient:
     """Python interface to Rust LLM library"""
-    
+
     def __init__(self, config: LLMConfig):
         self.rust_client = initialize_rust_llm(config)
         self.request_queue = RequestQueue()
-    
+
     async def generate(self, prompt: str, config: GenerationConfig) -> LLMResponse:
         """Generate response from prompt"""
         pass
-    
+
     async def generate_stream(self, prompt: str, config: GenerationConfig) -> AsyncIterator[str]:
         """Generate response with streaming"""
         pass
-    
+
     def validate_prompt(self, prompt: str) -> bool:
         """Validate prompt before generation"""
         pass
@@ -677,7 +677,7 @@ class LLMConfig:
     api_key: str
     timeout: int = 30
     retry_count: int = 3
-    
+
 class GenerationConfig:
     """Parameters for text generation"""
     temperature: float = 0.7
@@ -707,15 +707,15 @@ The following shows a conceptual implementation of the Rust LLM client using PyO
 
 class RustLLMClient:
     """Rust LLM client exposed to Python via PyO3"""
-    
+
     def __init__(self, config: ClientConfig):
         """Initialize LLM client"""
         pass
-    
+
     def generate(self, prompt: str, config: GenerationConfig) -> str:
         """Generate response synchronously"""
         pass
-    
+
     def generate_stream(self, prompt: str, config: GenerationConfig) -> Iterator[str]:
         """Generate response with streaming"""
         pass
@@ -749,7 +749,7 @@ class Document(BaseModel):
     processing_status: ProcessingStatus
     chunk_count: int = 0
     metadata: Dict[str, Any] = {}
-    
+
 class ProcessingStatus(str, Enum):
     PENDING = "pending"
     PROCESSING = "processing"
@@ -878,17 +878,17 @@ vector_table_schema = pa.schema([
 ```python
 class CacheManager:
     """Manage caching for frequently accessed data"""
-    
+
     def __init__(self, redis_client: Redis):
         self.redis = redis_client
         self.ttl_embeddings = 3600  # 1 hour
         self.ttl_queries = 1800  # 30 minutes
-    
+
     async def cache_embedding(self, text: str, embedding: np.ndarray):
         """Cache embedding for text"""
         key = f"emb:{hashlib.sha256(text.encode()).hexdigest()}"
         await self.redis.setex(key, self.ttl_embeddings, embedding.tobytes())
-    
+
     async def get_cached_embedding(self, text: str) -> Optional[np.ndarray]:
         """Retrieve cached embedding"""
         key = f"emb:{hashlib.sha256(text.encode()).hexdigest()}"
@@ -1042,15 +1042,15 @@ WS /api/v1/ws/query
 ```python
 class IDataProcessor(Protocol):
     """Interface for data processors"""
-    
+
     def can_process(self, file_path: str) -> bool:
         """Check if processor can handle file"""
         ...
-    
+
     def extract_text(self, file_path: str) -> str:
         """Extract text from file"""
         ...
-    
+
     def chunk_text(self, text: str, config: ChunkingConfig) -> List[TextChunk]:
         """Chunk text according to configuration"""
         ...
@@ -1061,15 +1061,15 @@ class IDataProcessor(Protocol):
 ```python
 class IEmbeddingModel(Protocol):
     """Interface for embedding models"""
-    
+
     def encode(self, texts: List[str]) -> np.ndarray:
         """Encode texts to embeddings"""
         ...
-    
+
     def get_dimension(self) -> int:
         """Get embedding dimension"""
         ...
-    
+
     def batch_size(self) -> int:
         """Get optimal batch size"""
         ...
@@ -1163,11 +1163,11 @@ database:
     database: "rag_db"
     user: "rag_user"
     password: "${POSTGRES_PASSWORD}"
-  
+
   lancedb:
     path: "./data/lancedb"
     table_name: "embeddings"
-  
+
   redis:
     host: "localhost"
     port: 6379
@@ -1320,7 +1320,7 @@ import numpy as np
 
 class TextChunk(BaseModel):
     """Represents a chunk of processed text.
-    
+
     Attributes:
         content: The text content of the chunk
         metadata: Additional information about the chunk
@@ -1331,7 +1331,7 @@ class TextChunk(BaseModel):
     metadata: dict[str, Any]
     source_file: str
     chunk_index: int
-    
+
     class Config:
         """Pydantic configuration."""
         frozen = True
@@ -1343,15 +1343,15 @@ async def process_document(
     overlap: int = 128,
 ) -> List[TextChunk]:
     """Process a document into text chunks.
-    
+
     Args:
         file_path: Path to the document file
         chunk_size: Target size for each chunk in tokens
         overlap: Number of overlapping tokens between chunks
-        
+
     Returns:
         List of TextChunk objects
-        
+
     Raises:
         FileNotFoundError: If the file doesn't exist
         ProcessingError: If document processing fails
@@ -1369,45 +1369,45 @@ async def process_document(
 ```python
 class SecurityManager:
     """Centralized security management for production deployment"""
-    
+
     def encrypt_data_at_rest(self, data: bytes, key: str) -> bytes:
         """Encrypt data using AES-256 encryption"""
         pass
-    
+
     def encrypt_data_in_transit(self, data: str) -> str:
         """Apply TLS 1.3 encryption for data transmission"""
         pass
-    
+
     def anonymize_sensitive_content(self, text: str) -> str:
         """Detect and anonymize PII in document content"""
         pass
-    
+
     def audit_data_access(self, user_id: str, action: str, resource: str):
         """Log all data access for audit trail"""
         pass
 
 class PIIDetector:
     """Detect personally identifiable information"""
-    
+
     def detect_pii(self, text: str) -> List[PIIMatch]:
         """Identify PII patterns in text content"""
         pass
-    
+
     def anonymize_pii(self, text: str, pii_matches: List[PIIMatch]) -> str:
         """Replace PII with anonymized placeholders"""
         pass
 
 class AccessControlManager:
     """Role-based access control implementation"""
-    
+
     def authenticate_user(self, token: str) -> UserContext:
         """Authenticate user using JWT tokens"""
         pass
-    
+
     def authorize_action(self, user: UserContext, action: str, resource: str) -> bool:
         """Check if user is authorized for specific action"""
         pass
-    
+
     def apply_rate_limiting(self, user_id: str, endpoint: str) -> bool:
         """Apply rate limiting based on user tier"""
         pass
@@ -1429,13 +1429,13 @@ class AccessControlManager:
 # JWT-based authentication
 class AuthMiddleware:
     """Middleware for API authentication"""
-    
+
     async def authenticate_request(self, request: Request) -> Optional[User]:
         """Validate JWT token and return user"""
         token = request.headers.get("Authorization")
         if not token:
             raise UnauthorizedException()
-        
+
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             user_id = payload.get("sub")
@@ -1456,30 +1456,30 @@ class AuthMiddleware:
 ```python
 class DocumentUpload(BaseModel):
     """Validated document upload request"""
-    
+
     file: UploadFile = Field(..., description="Document file")
-    
+
     @validator('file')
     def validate_file(cls, v):
         """Validate file type and size"""
-        allowed_types = {'application/pdf', 'text/plain', 
+        allowed_types = {'application/pdf', 'text/plain',
                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}
-        
+
         if v.content_type not in allowed_types:
             raise ValueError(f"File type {v.content_type} not allowed")
-        
+
         if v.size > MAX_FILE_SIZE:
             raise ValueError(f"File too large. Max size: {MAX_FILE_SIZE}")
-        
+
         return v
 
 class QueryRequest(BaseModel):
     """Validated query request"""
-    
+
     query: str = Field(..., min_length=1, max_length=1000)
     top_k: int = Field(5, ge=1, le=20)
     temperature: float = Field(0.7, ge=0.0, le=2.0)
-    
+
     @validator('query')
     def sanitize_query(cls, v):
         """Sanitize query text"""
@@ -1541,66 +1541,66 @@ async def query(request: Request, query_req: QueryRequest):
 ```python
 class PerformanceOptimizer:
     """Production-grade performance optimization"""
-    
+
     def __init__(self):
         self.cache_manager = CacheManager()
         self.load_balancer = LoadBalancer()
         self.resource_monitor = ResourceMonitor()
-    
+
     async def optimize_query_processing(self, query: str) -> OptimizationStrategy:
         """Determine optimal processing strategy for query"""
         pass
-    
+
     def enable_horizontal_scaling(self, target_load: float):
         """Auto-scale processing nodes based on load"""
         pass
-    
+
     def optimize_embedding_batch_size(self, available_memory: int) -> int:
         """Calculate optimal batch size for current resources"""
         pass
 
 class CacheManager:
     """Advanced caching for frequently accessed data"""
-    
+
     def __init__(self):
         self.embedding_cache = Redis(decode_responses=True)
         self.query_cache = Redis(decode_responses=True)
         self.document_cache = Redis(decode_responses=True)
-    
+
     async def cache_embeddings(self, text_hash: str, embedding: np.ndarray):
         """Cache embeddings for repeated content"""
         pass
-    
+
     async def get_cached_query_result(self, query_hash: str) -> Optional[QueryResult]:
         """Retrieve cached query results"""
         pass
-    
+
     def implement_cache_invalidation(self, document_id: str):
         """Invalidate related caches when document updates"""
         pass
 
 class LoadBalancer:
     """Distribute processing load across multiple nodes"""
-    
+
     def balance_embedding_requests(self, requests: List[EmbeddingRequest]) -> Dict[str, List[EmbeddingRequest]]:
         """Distribute embedding requests across available nodes"""
         pass
-    
+
     def route_query_to_optimal_node(self, query: str) -> str:
         """Route query to least loaded processing node"""
         pass
 
 class ResourceMonitor:
     """Monitor and optimize resource utilization"""
-    
+
     def monitor_memory_usage(self) -> MemoryUsage:
         """Track memory usage across components"""
         pass
-    
+
     def monitor_gpu_utilization(self) -> GPUUsage:
         """Track GPU usage for embedding generation"""
         pass
-    
+
     def trigger_auto_scaling(self, metrics: PerformanceMetrics):
         """Trigger scaling based on performance metrics"""
         pass
@@ -1640,16 +1640,16 @@ class ResourceMonitor:
 ```python
 class PerformanceOptimizer:
     """Performance optimization utilities"""
-    
+
     def __init__(self):
         self.embedding_cache = LRUCache(maxsize=10000)
         self.query_cache = TTLCache(maxsize=1000, ttl=1800)
-    
+
     @lru_cache(maxsize=1000)
     def get_cached_embedding(self, text: str) -> Optional[np.ndarray]:
         """Cache embeddings for frequently used texts"""
         pass
-    
+
     async def cache_query_result(self, query_hash: str, result: QueryResult):
         """Cache query results for duplicate queries"""
         await self.redis.setex(
@@ -1664,12 +1664,12 @@ class PerformanceOptimizer:
 ```python
 class BatchProcessor:
     """Process operations in batches for efficiency"""
-    
+
     def __init__(self, batch_size: int = 32, max_wait: float = 0.1):
         self.batch_size = batch_size
         self.max_wait = max_wait
         self.queue = asyncio.Queue()
-    
+
     async def process_batch(self, items: List[Any]) -> List[Any]:
         """Process items in batches"""
         results = []
@@ -1702,7 +1702,7 @@ services:
         limits:
           cpus: '2'
           memory: 4G
-  
+
   worker:
     image: rag-backend:latest
     command: celery -A tasks worker
@@ -1729,43 +1729,43 @@ from src.processors.pdf_processor import PDFProcessor
 
 class TestPDFProcessor:
     """Test PDF processing functionality"""
-    
+
     @pytest.fixture
     def processor(self):
         return PDFProcessor()
-    
+
     @pytest.fixture
     def sample_pdf(self, tmp_path):
         # Create sample PDF for testing
         pdf_path = tmp_path / "test.pdf"
         # ... create PDF
         return str(pdf_path)
-    
+
     def test_can_process_pdf(self, processor):
         """Test PDF file type detection"""
         assert processor.can_process("document.pdf")
         assert not processor.can_process("document.docx")
-    
+
     def test_extract_text_from_pdf(self, processor, sample_pdf):
         """Test text extraction from PDF"""
         text = processor.extract_text(sample_pdf)
         assert isinstance(text, str)
         assert len(text) > 0
-    
+
     def test_chunk_text(self, processor):
         """Test text chunking"""
         text = "This is a test document. " * 100
         chunks = processor.chunk_text(text, chunk_size=100, overlap=20)
-        
+
         assert len(chunks) > 0
         assert all(isinstance(c.content, str) for c in chunks)
         assert all(c.chunk_index >= 0 for c in chunks)
-    
+
     def test_empty_pdf_handling(self, processor, tmp_path):
         """Test handling of empty PDF"""
         empty_pdf = tmp_path / "empty.pdf"
         # ... create empty PDF
-        
+
         with pytest.raises(ValueError, match="Empty document"):
             processor.extract_text(str(empty_pdf))
 ```
@@ -1783,35 +1783,35 @@ from src.database import VectorDatabase
 @pytest.mark.integration
 class TestEmbeddingPipeline:
     """Test complete embedding pipeline"""
-    
+
     @pytest.fixture
     async def setup_pipeline(self):
         """Set up test pipeline components"""
         processor = ProcessorFactory.get_processor("test.pdf")
         embedding_service = EmbeddingService(model_name="bge")
         vector_db = VectorDatabase(db_path="./test_db", table_name="test")
-        
+
         yield processor, embedding_service, vector_db
-        
+
         # Cleanup
         await vector_db.close()
-    
+
     @pytest.mark.asyncio
     async def test_complete_pipeline(self, setup_pipeline, sample_document):
         """Test document processing through complete pipeline"""
         processor, embedding_service, vector_db = setup_pipeline
-        
+
         # Extract and chunk
         text = processor.extract_text(sample_document)
         chunks = processor.chunk_text(text)
-        
+
         # Generate embeddings
         embedded_chunks = await embedding_service.embed_chunks(chunks)
-        
+
         # Store in database
         success = await vector_db.insert_embeddings(embedded_chunks)
         assert success
-        
+
         # Verify retrieval
         query_embedding = await embedding_service.encode("test query")
         results = await vector_db.search(query_embedding, top_k=5)
@@ -1829,25 +1829,25 @@ from httpx import AsyncClient
 @pytest.mark.e2e
 class TestAPIEndpoints:
     """End-to-end API tests"""
-    
+
     @pytest.mark.asyncio
     async def test_document_upload_and_query(self, client: AsyncClient):
         """Test complete document upload and query flow"""
-        
+
         # Upload document
         files = {"file": ("test.pdf", open("test.pdf", "rb"), "application/pdf")}
         response = await client.post("/api/v1/documents", files=files)
         assert response.status_code == 200
-        
+
         document_id = response.json()["document_id"]
-        
+
         # Wait for processing
         await asyncio.sleep(5)
-        
+
         # Check status
         response = await client.get(f"/api/v1/documents/{document_id}")
         assert response.json()["status"] == "completed"
-        
+
         # Submit query
         query_data = {
             "query": "What is the main topic?",
@@ -1855,7 +1855,7 @@ class TestAPIEndpoints:
         }
         response = await client.post("/api/v1/query", json=query_data)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert "response" in result
         assert "sources" in result
@@ -1874,37 +1874,37 @@ from concurrent.futures import ThreadPoolExecutor
 @pytest.mark.performance
 class TestPerformance:
     """Performance and load tests"""
-    
+
     def test_concurrent_queries(self, client):
         """Test system under concurrent load"""
-        
+
         queries = ["test query"] * 100
-        
+
         def submit_query(query):
             start = time.time()
             response = client.post("/api/v1/query", json={"query": query})
             latency = time.time() - start
             return response.status_code == 200, latency
-        
+
         with ThreadPoolExecutor(max_workers=10) as executor:
             results = list(executor.map(submit_query, queries))
-        
+
         successes = sum(1 for success, _ in results if success)
         latencies = [lat for _, lat in results]
-        
+
         assert successes / len(queries) > 0.95  # 95% success rate
         assert sum(latencies) / len(latencies) < 2.0  # Average < 2s
         assert max(latencies) < 5.0  # Max < 5s
-    
+
     def test_embedding_throughput(self, embedding_service):
         """Test embedding generation throughput"""
-        
+
         texts = ["test text " * 50] * 1000
-        
+
         start = time.time()
         embeddings = embedding_service.batch_encode(texts)
         duration = time.time() - start
-        
+
         throughput = len(texts) / duration
         assert throughput > 100  # > 100 texts/second
 ```
@@ -2134,13 +2134,13 @@ embedding_cache_hits = Counter('embedding_cache_hits_total', 'Cache hits')
 async def metrics_middleware(request: Request, call_next):
     """Collect metrics for requests"""
     start_time = time.time()
-    
+
     response = await call_next(request)
-    
+
     duration = time.time() - start_time
     request_duration.observe(duration)
     request_count.labels(method=request.method, endpoint=request.url.path).inc()
-    
+
     return response
 ```
 
@@ -2152,10 +2152,10 @@ from pythonjsonlogger import jsonlogger
 
 def setup_logging():
     """Configure structured logging"""
-    
+
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    
+
     handler = logging.StreamHandler()
     formatter = jsonlogger.JsonFormatter(
         '%(asctime)s %(name)s %(levelname)s %(message)s',
@@ -2163,7 +2163,7 @@ def setup_logging():
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    
+
     return logger
 
 # Usage
@@ -2182,25 +2182,25 @@ logger.info("Document processed", extra={
 ```python
 class RelationshipGraph:
     """Graph-based system for modeling document element relationships"""
-    
+
     def __init__(self):
         self.graph = nx.DiGraph()
         self.relationship_embeddings = {}
-    
+
     def add_content_node(self, node_id: str, content: ContentElement, embedding: np.ndarray):
         """Add content element as graph node"""
         pass
-    
-    def add_relationship_edge(self, source_id: str, target_id: str, 
+
+    def add_relationship_edge(self, source_id: str, target_id: str,
                            relationship: ContentRelationship):
         """Add relationship between content elements"""
         pass
-    
-    def find_related_content(self, query_embedding: np.ndarray, 
+
+    def find_related_content(self, query_embedding: np.ndarray,
                            max_depth: int = 2) -> List[RelatedContentGroup]:
         """Find content related through graph relationships"""
         pass
-    
+
     def preserve_context_relationships(self, chunk_ids: List[str]) -> ContextGraph:
         """Preserve relationships when chunking content"""
         pass
@@ -2239,20 +2239,20 @@ class RelationshipPath:
 
 class AdvancedChunkingStrategy:
     """Enhanced chunking that preserves complex relationships"""
-    
+
     def __init__(self, relationship_graph: RelationshipGraph):
         self.relationship_graph = relationship_graph
         self.chunk_size_optimizer = ChunkSizeOptimizer()
-    
+
     def create_relationship_aware_chunks(self, document: MultiModalDocument) -> List[RelationshipAwareChunk]:
         """Create chunks that preserve important relationships"""
         pass
-    
+
     def optimize_chunk_boundaries(self, provisional_chunks: List[TextChunk]) -> List[TextChunk]:
         """Optimize chunk boundaries to preserve relationships"""
         pass
-    
-    def merge_related_chunks(self, chunks: List[TextChunk], 
+
+    def merge_related_chunks(self, chunks: List[TextChunk],
                            relationship_threshold: float) -> List[TextChunk]:
         """Merge chunks with strong relationships"""
         pass
@@ -2263,31 +2263,31 @@ class RelationshipAwareChunk(TextChunk):
     relationship_metadata: Dict[str, Any]
     cross_modal_elements: List[str]
     semantic_cluster_id: str
-    
+
 class SemanticRelationshipAnalyzer:
     """Analyze semantic relationships between document elements"""
-    
+
     def __init__(self, nlp_model):
         self.nlp_model = nlp_model
         self.relationship_classifier = RelationshipClassifier()
-    
+
     def extract_semantic_relationships(self, elements: List[ContentElement]) -> List[SemanticRelationship]:
         """Extract semantic relationships using NLP"""
         pass
-    
-    def classify_relationship_type(self, source: ContentElement, 
+
+    def classify_relationship_type(self, source: ContentElement,
                                  target: ContentElement) -> RelationshipType:
         """Classify the type of relationship between elements"""
         pass
-    
+
     def compute_relationship_strength(self, relationship: SemanticRelationship) -> float:
         """Compute the strength of a semantic relationship"""
         pass
 
 class RelationshipClassifier:
     """ML model for classifying relationship types"""
-    
-    def predict_relationship_type(self, source_features: np.ndarray, 
+
+    def predict_relationship_type(self, source_features: np.ndarray,
                                 target_features: np.ndarray) -> RelationshipType:
         """Predict relationship type using ML model"""
         pass
@@ -2331,20 +2331,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-cov
-      
+
       - name: Run tests
         run: pytest --cov=src tests/
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
 
@@ -2352,13 +2352,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Run Black
         run: black --check src/
-      
+
       - name: Run Ruff
         run: ruff check src/
-      
+
       - name: Run MyPy
         run: mypy src/
 
@@ -2367,10 +2367,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Build Docker image
         run: docker build -t rag-backend:${{ github.sha }} .
-      
+
       - name: Push to registry
         run: |
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin

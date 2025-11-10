@@ -2,8 +2,8 @@
 
 ## Overview
 
-**Milestone Duration**: 4-6 weeks  
-**Priority**: High  
+**Milestone Duration**: 4-6 weeks
+**Priority**: High
 **Goal**: Implement a robust Data Processing Module capable of handling multi-modal content with advanced relationship preservation
 
 ## Task Categories
@@ -418,7 +418,7 @@ Milestone 2 will focus on the **Embedding Module** with:
 
 ## Task Summary
 
-**Total Estimated Time**: 400+ hours  
-**Critical Path**: Phases 1-3 (Core infrastructure and processors)  
-**Key Dependencies**: Python environment setup → Base classes → Format processors → Integration  
+**Total Estimated Time**: 400+ hours
+**Critical Path**: Phases 1-3 (Core infrastructure and processors)
+**Key Dependencies**: Python environment setup → Base classes → Format processors → Integration
 **Risk Mitigation**: Start with simpler formats, comprehensive testing, regular reviews

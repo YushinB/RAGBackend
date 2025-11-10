@@ -1,5 +1,4 @@
-"""
-Database Module
+"""Database Module.
 
 This module handles database operations:
 - PostgreSQL database connections and operations
