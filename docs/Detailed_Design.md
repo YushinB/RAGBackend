@@ -3,9 +3,10 @@
 ## Document Information
 
 - **Project Name**: RAG (Retrieval-Augmented Generation) Python Backend
-- **Document Version**: 1.0
-- **Date**: November 9, 2025
+- **Document Version**: 2.0
+- **Date**: November 10, 2025
 - **Standard**: ISO/IEC/IEEE 26514
+- **Update**: Enhanced with multi-modal processing, conflict resolution, and production-ready architecture
 
 ## Table of Contents
 
@@ -144,7 +145,23 @@ The RAG Python Backend follows a modular, pipeline-based architecture with the f
 
 #### 3.1.1 Purpose
 
-The Data Processing Module is responsible for ingesting various file formats, extracting text content, and preparing it for embedding generation through intelligent chunking strategies.
+The Data Processing Module is responsible for ingesting various file formats, extracting multi-modal content, and preparing it for embedding generation through intelligent chunking strategies with advanced relationship preservation. It addresses complex document patterns including multi-modal content, relationship preservation, and conflict-aware processing.
+
+#### 3.1.2 Enhanced Multi-Modal Processing Capabilities
+
+**Core Multi-Modal Features**:
+
+- **Hierarchical Text Extraction**: Preserves document structure and hierarchy
+- **Image Caption and Metadata Extraction**: Processes embedded images for content understanding
+- **LaTeX Equation Recognition**: Identifies and processes mathematical equations
+- **Table Structure and Content Parsing**: Extracts and preserves table relationships and data
+
+**Advanced Processing Capabilities** (Addressing Complex Patterns):
+
+- **Complex Excel Processing**: Handles Excel files with cell notes, arrows, and inter-cell relationships
+- **Multi-Modal Chunking Pipeline**: Creates linked chunks for text blocks, figures, charts, and tables
+- **Relationship Preservation**: Maintains associations between figures and captions, tables and references
+- **Consistent Multi-Modal Embeddings**: Generates unified embeddings for text + image caption + metadata
 
 #### 3.1.2 Class Diagram
 
@@ -165,18 +182,81 @@ class DataProcessor(ABC):
         pass
     
     @abstractmethod
+    def extract_multimodal_content(self, file_path: str) -> MultiModalContent:
+        """Extract multi-modal content including text, images, tables, equations"""
+        pass
+    
+    @abstractmethod
     def chunk_text(self, text: str, chunk_size: int, overlap: int) -> List[TextChunk]:
         """Split text into chunks with overlap"""
         pass
 
+class MultiModalContent:
+    """Container for multi-modal document content"""
+    text_content: str
+    images: List[ImageContent]
+    tables: List[TableContent]
+    equations: List[EquationContent]
+    relationships: List[ContentRelationship]
+    hierarchy: DocumentHierarchy
+
+class ImageContent:
+    """Represents extracted image with metadata"""
+    image_data: bytes
+    caption: Optional[str]
+    alt_text: Optional[str]
+    position: ContentPosition
+    metadata: Dict[str, Any]
+
+class TableContent:
+    """Represents table structure and content"""
+    headers: List[str]
+    rows: List[List[str]]
+    caption: Optional[str]
+    notes: Dict[str, str]  # Cell notes and annotations
+    relationships: List[CellRelationship]  # Excel arrows, references
+    position: ContentPosition
+
+class EquationContent:
+    """Represents mathematical equations"""
+    latex_code: str
+    rendered_text: str
+    position: ContentPosition
+    context: str  # Surrounding text context
+
+class ContentRelationship:
+    """Represents relationships between content elements"""
+    source_id: str
+    target_id: str
+    relationship_type: RelationshipType
+    confidence: float
+
+class RelationshipType(Enum):
+    FIGURE_CAPTION = "figure_caption"
+    TABLE_REFERENCE = "table_reference"
+    EQUATION_REFERENCE = "equation_reference"
+    CELL_ARROW = "cell_arrow"
+    HIERARCHICAL = "hierarchical"
+
 class TextChunk:
-    """Represents a chunk of processed text"""
+    """Represents a chunk of processed text with relationships"""
     content: str
     metadata: Dict[str, Any]
     source_file: str
     chunk_index: int
     start_position: int
     end_position: int
+    chunk_type: ChunkType
+    relationships: List[str]  # IDs of related chunks
+    multimodal_elements: List[str]  # IDs of associated images/tables/equations
+    confidence_score: float  # Quality/reliability score
+    
+class ChunkType(Enum):
+    TEXT = "text"
+    MULTIMODAL = "multimodal"
+    TABLE = "table"
+    EQUATION = "equation"
+    IMAGE_CAPTION = "image_caption"
     
 class PDFProcessor(DataProcessor):
     """Processor for PDF documents"""
@@ -403,55 +483,138 @@ class QueryOptimizer:
 
 #### 3.4.1 Purpose
 
-Process user queries, retrieve relevant context, and construct prompts for LLM generation.
+Process user queries, retrieve relevant context, construct prompts for LLM generation, and handle conflict resolution for contradictory information across documents.
+
+#### 3.4.2 Enhanced Query Processing Features
+
+**Advanced Query Capabilities**:
+
+- **Conflict Detection**: Identifies contradictory information across documents
+- **Source Ranking**: Prioritizes information based on document authority and recency
+- **Multi-Perspective Responses**: Presents conflicting viewpoints when appropriate
+- **Context Confidence Scoring**: Evaluates reliability of retrieved information
+- **Relationship-Aware Retrieval**: Considers content relationships in context selection
 
 #### 3.4.2 Class Diagram
 
 ```python
 class QueryProcessor:
-    """Main query processing orchestrator"""
+    """Main query processing orchestrator with conflict resolution"""
     
     def __init__(self, embedding_service: EmbeddingService, 
                  vector_db: VectorDatabase,
-                 llm_client: LLMClient):
+                 llm_client: LLMClient,
+                 conflict_detector: ConflictDetector,
+                 source_ranker: SourceRanker):
         self.embedding_service = embedding_service
         self.vector_db = vector_db
         self.llm_client = llm_client
         self.prompt_builder = PromptBuilder()
+        self.conflict_detector = conflict_detector
+        self.source_ranker = source_ranker
     
     async def process_query(self, query: str, config: QueryConfig) -> QueryResult:
-        """Process complete query pipeline"""
+        """Process complete query pipeline with conflict resolution"""
         pass
     
-    async def retrieve_context(self, query_embedding: np.ndarray, top_k: int) -> List[TextChunk]:
+    async def retrieve_context(self, query_embedding: np.ndarray, top_k: int) -> List[SearchResult]:
         """Retrieve relevant context from vector DB"""
         pass
+    
+    def detect_conflicts(self, contexts: List[SearchResult]) -> ConflictAnalysis:
+        """Detect conflicting information in retrieved contexts"""
+        pass
+    
+    def resolve_conflicts(self, conflicts: ConflictAnalysis) -> ConflictResolution:
+        """Resolve conflicts using configured strategies"""
+        pass
+
+class ConflictDetector:
+    """Detect contradictory information across documents"""
+    
+    def analyze_conflicts(self, contexts: List[SearchResult]) -> ConflictAnalysis:
+        """Analyze contexts for conflicts and contradictions"""
+        pass
+
+class SourceRanker:
+    """Rank sources based on authority, recency, and reliability"""
+    
+    def rank_sources(self, contexts: List[SearchResult]) -> List[RankedSource]:
+        """Rank sources using multiple criteria"""
+        pass
+
+class ConflictAnalysis:
+    """Results of conflict detection analysis"""
+    conflicts: List[DetectedConflict]
+    conflict_free_contexts: List[SearchResult]
+    confidence_scores: Dict[str, float]
+
+class DetectedConflict:
+    """Represents a detected conflict between sources"""
+    conflicting_sources: List[str]
+    conflict_type: ConflictType
+    confidence: float
+    evidence: List[str]
+
+class ConflictType(Enum):
+    FACTUAL_CONTRADICTION = "factual_contradiction"
+    TEMPORAL_INCONSISTENCY = "temporal_inconsistency"
+    NUMERICAL_DISCREPANCY = "numerical_discrepancy"
+    PERSPECTIVE_DIFFERENCE = "perspective_difference"
+
+class ConflictResolution:
+    """Result of conflict resolution process"""
+    resolution_strategy: ResolutionStrategy
+    selected_sources: List[str]
+    confidence_level: float
+    explanation: str
+
+class ResolutionStrategy(Enum):
+    RECENCY_BASED = "recency_based"
+    AUTHORITY_BASED = "authority_based"
+    CONSENSUS_BASED = "consensus_based"
+    MULTI_PERSPECTIVE = "multi_perspective"
 
 class PromptBuilder:
-    """Construct prompts for LLM"""
+    """Construct prompts for LLM with conflict awareness"""
     
     def build_prompt(self, query: str, context: List[TextChunk], 
-                    system_prompt: str = None) -> str:
-        """Build complete prompt with context"""
+                    system_prompt: str = None,
+                    conflicts: Optional[ConflictResolution] = None) -> str:
+        """Build enhanced prompt with conflict resolution information"""
         pass
     
     def format_context(self, chunks: List[TextChunk]) -> str:
         """Format retrieved chunks for context"""
         pass
+    
+    def format_conflict_info(self, resolution: ConflictResolution) -> str:
+        """Format conflict resolution information for prompt"""
+        pass
 
 class QueryConfig:
-    """Configuration for query processing"""
+    """Configuration for enhanced query processing"""
     top_k: int = 5
     temperature: float = 0.7
     max_tokens: int = 1024
     include_sources: bool = True
     rerank: bool = True
+    conflict_detection: bool = True
+    multi_perspective_mode: bool = False
+    source_ranking_weights: Dict[str, float] = {
+        "recency": 0.3,
+        "authority": 0.4,
+        "relevance": 0.3
+    }
     
 class QueryResult:
-    """Complete query result"""
+    """Complete query result with conflict information"""
     query: str
     response: str
-    sources: List[TextChunk]
+    sources: List[SearchResult]
+    conflicts: Optional[ConflictAnalysis]
+    resolution: Optional[ConflictResolution]
+    confidence_score: float
     metadata: Dict[str, Any]
     processing_time: float
 ```
@@ -1199,6 +1362,65 @@ async def process_document(
 
 ## 7. Security Considerations
 
+### 7.1 Production-Ready Security Architecture
+
+#### 7.1.1 Data Privacy and Protection
+
+```python
+class SecurityManager:
+    """Centralized security management for production deployment"""
+    
+    def encrypt_data_at_rest(self, data: bytes, key: str) -> bytes:
+        """Encrypt data using AES-256 encryption"""
+        pass
+    
+    def encrypt_data_in_transit(self, data: str) -> str:
+        """Apply TLS 1.3 encryption for data transmission"""
+        pass
+    
+    def anonymize_sensitive_content(self, text: str) -> str:
+        """Detect and anonymize PII in document content"""
+        pass
+    
+    def audit_data_access(self, user_id: str, action: str, resource: str):
+        """Log all data access for audit trail"""
+        pass
+
+class PIIDetector:
+    """Detect personally identifiable information"""
+    
+    def detect_pii(self, text: str) -> List[PIIMatch]:
+        """Identify PII patterns in text content"""
+        pass
+    
+    def anonymize_pii(self, text: str, pii_matches: List[PIIMatch]) -> str:
+        """Replace PII with anonymized placeholders"""
+        pass
+
+class AccessControlManager:
+    """Role-based access control implementation"""
+    
+    def authenticate_user(self, token: str) -> UserContext:
+        """Authenticate user using JWT tokens"""
+        pass
+    
+    def authorize_action(self, user: UserContext, action: str, resource: str) -> bool:
+        """Check if user is authorized for specific action"""
+        pass
+    
+    def apply_rate_limiting(self, user_id: str, endpoint: str) -> bool:
+        """Apply rate limiting based on user tier"""
+        pass
+```
+
+#### 7.1.2 Infrastructure Security
+
+- **Secure Deployment**: Containerization with Docker and Kubernetes security policies
+- **Network Security**: VPN access, firewall configurations, and network segmentation
+- **Secrets Management**: HashiCorp Vault or AWS Secrets Manager integration
+- **Regular Security Audits**: Automated vulnerability scanning and penetration testing
+- **Compliance**: GDPR, HIPAA, and SOC 2 compliance measures
+
 ### 7.1 Authentication & Authorization
 
 #### 7.1.1 API Authentication
@@ -1299,6 +1521,106 @@ async def query(request: Request, query_req: QueryRequest):
 ```
 
 ## 8. Performance Requirements
+
+### 8.1 Enhanced Performance Targets (Customer-Facing)
+
+| Operation | Target Latency | Target Throughput | Customer Impact |
+|-----------|----------------|-------------------|-----------------|
+| Document Upload | < 3s for 10MB file | 200 uploads/hour | User experience |
+| Multi-Modal Processing | < 5s per document | 100 docs/hour | Processing efficiency |
+| Embedding Generation | < 500ms per 1000 tokens | 15,000 tokens/sec | Real-time feel |
+| Conflict Detection | < 200ms per query | 800 queries/sec | Response quality |
+| Vector Search | < 50ms | 2000 queries/sec | Search responsiveness |
+| Query Processing | < 1.5s end-to-end | 800 queries/sec | User satisfaction |
+| LLM Response | < 3s | 400 queries/sec | Interactive experience |
+
+### 8.2 Customer-Facing Performance Architecture
+
+#### 8.2.1 Scalability for Large Deployments
+
+```python
+class PerformanceOptimizer:
+    """Production-grade performance optimization"""
+    
+    def __init__(self):
+        self.cache_manager = CacheManager()
+        self.load_balancer = LoadBalancer()
+        self.resource_monitor = ResourceMonitor()
+    
+    async def optimize_query_processing(self, query: str) -> OptimizationStrategy:
+        """Determine optimal processing strategy for query"""
+        pass
+    
+    def enable_horizontal_scaling(self, target_load: float):
+        """Auto-scale processing nodes based on load"""
+        pass
+    
+    def optimize_embedding_batch_size(self, available_memory: int) -> int:
+        """Calculate optimal batch size for current resources"""
+        pass
+
+class CacheManager:
+    """Advanced caching for frequently accessed data"""
+    
+    def __init__(self):
+        self.embedding_cache = Redis(decode_responses=True)
+        self.query_cache = Redis(decode_responses=True)
+        self.document_cache = Redis(decode_responses=True)
+    
+    async def cache_embeddings(self, text_hash: str, embedding: np.ndarray):
+        """Cache embeddings for repeated content"""
+        pass
+    
+    async def get_cached_query_result(self, query_hash: str) -> Optional[QueryResult]:
+        """Retrieve cached query results"""
+        pass
+    
+    def implement_cache_invalidation(self, document_id: str):
+        """Invalidate related caches when document updates"""
+        pass
+
+class LoadBalancer:
+    """Distribute processing load across multiple nodes"""
+    
+    def balance_embedding_requests(self, requests: List[EmbeddingRequest]) -> Dict[str, List[EmbeddingRequest]]:
+        """Distribute embedding requests across available nodes"""
+        pass
+    
+    def route_query_to_optimal_node(self, query: str) -> str:
+        """Route query to least loaded processing node"""
+        pass
+
+class ResourceMonitor:
+    """Monitor and optimize resource utilization"""
+    
+    def monitor_memory_usage(self) -> MemoryUsage:
+        """Track memory usage across components"""
+        pass
+    
+    def monitor_gpu_utilization(self) -> GPUUsage:
+        """Track GPU usage for embedding generation"""
+        pass
+    
+    def trigger_auto_scaling(self, metrics: PerformanceMetrics):
+        """Trigger scaling based on performance metrics"""
+        pass
+```
+
+#### 8.2.2 Response Time Optimization
+
+- **Asynchronous Processing**: Non-blocking document ingestion and processing
+- **Pre-computed Embeddings**: Cache embeddings for common content patterns
+- **Intelligent Caching**: Multi-layer caching strategy for embeddings, queries, and results
+- **Batch Optimization**: Dynamic batch sizing based on available resources
+- **GPU Acceleration**: CUDA optimization for embedding generation and similarity search
+
+#### 8.2.3 Resource Management for Enterprise Deployment
+
+- **Memory Optimization**: Intelligent memory management for large-scale document collections
+- **Auto-scaling**: Kubernetes-based horizontal pod autoscaling
+- **Resource Monitoring**: Real-time monitoring with Prometheus and Grafana
+- **Load Distribution**: Intelligent load balancing across processing nodes
+- **Storage Optimization**: Tiered storage with data compression and archiving
 
 ### 8.1 Performance Targets
 
@@ -1853,7 +2175,146 @@ logger.info("Document processed", extra={
 })
 ```
 
-### 10.4 CI/CD Pipeline
+### 10.5 Advanced Relationship Modeling Architecture
+
+#### 10.5.1 Graph-Based Relationship System
+
+```python
+class RelationshipGraph:
+    """Graph-based system for modeling document element relationships"""
+    
+    def __init__(self):
+        self.graph = nx.DiGraph()
+        self.relationship_embeddings = {}
+    
+    def add_content_node(self, node_id: str, content: ContentElement, embedding: np.ndarray):
+        """Add content element as graph node"""
+        pass
+    
+    def add_relationship_edge(self, source_id: str, target_id: str, 
+                           relationship: ContentRelationship):
+        """Add relationship between content elements"""
+        pass
+    
+    def find_related_content(self, query_embedding: np.ndarray, 
+                           max_depth: int = 2) -> List[RelatedContentGroup]:
+        """Find content related through graph relationships"""
+        pass
+    
+    def preserve_context_relationships(self, chunk_ids: List[str]) -> ContextGraph:
+        """Preserve relationships when chunking content"""
+        pass
+
+class ContentElement:
+    """Base class for all document content elements"""
+    id: str
+    element_type: ContentElementType
+    content: str
+    position: DocumentPosition
+    metadata: Dict[str, Any]
+    confidence_score: float
+
+class ContentElementType(Enum):
+    TEXT_PARAGRAPH = "text_paragraph"
+    IMAGE_WITH_CAPTION = "image_with_caption"
+    TABLE_WITH_DATA = "table_with_data"
+    EQUATION_WITH_CONTEXT = "equation_with_context"
+    FIGURE_REFERENCE = "figure_reference"
+    CELL_WITH_ANNOTATION = "cell_with_annotation"
+
+class RelatedContentGroup:
+    """Group of related content elements"""
+    primary_content: ContentElement
+    related_elements: List[ContentElement]
+    relationship_paths: List[RelationshipPath]
+    combined_embedding: np.ndarray
+    relevance_score: float
+
+class RelationshipPath:
+    """Path of relationships between content elements"""
+    source_id: str
+    target_id: str
+    path: List[ContentRelationship]
+    path_strength: float
+
+class AdvancedChunkingStrategy:
+    """Enhanced chunking that preserves complex relationships"""
+    
+    def __init__(self, relationship_graph: RelationshipGraph):
+        self.relationship_graph = relationship_graph
+        self.chunk_size_optimizer = ChunkSizeOptimizer()
+    
+    def create_relationship_aware_chunks(self, document: MultiModalDocument) -> List[RelationshipAwareChunk]:
+        """Create chunks that preserve important relationships"""
+        pass
+    
+    def optimize_chunk_boundaries(self, provisional_chunks: List[TextChunk]) -> List[TextChunk]:
+        """Optimize chunk boundaries to preserve relationships"""
+        pass
+    
+    def merge_related_chunks(self, chunks: List[TextChunk], 
+                           relationship_threshold: float) -> List[TextChunk]:
+        """Merge chunks with strong relationships"""
+        pass
+
+class RelationshipAwareChunk(TextChunk):
+    """Chunk that maintains relationship information"""
+    related_chunks: List[str]
+    relationship_metadata: Dict[str, Any]
+    cross_modal_elements: List[str]
+    semantic_cluster_id: str
+    
+class SemanticRelationshipAnalyzer:
+    """Analyze semantic relationships between document elements"""
+    
+    def __init__(self, nlp_model):
+        self.nlp_model = nlp_model
+        self.relationship_classifier = RelationshipClassifier()
+    
+    def extract_semantic_relationships(self, elements: List[ContentElement]) -> List[SemanticRelationship]:
+        """Extract semantic relationships using NLP"""
+        pass
+    
+    def classify_relationship_type(self, source: ContentElement, 
+                                 target: ContentElement) -> RelationshipType:
+        """Classify the type of relationship between elements"""
+        pass
+    
+    def compute_relationship_strength(self, relationship: SemanticRelationship) -> float:
+        """Compute the strength of a semantic relationship"""
+        pass
+
+class RelationshipClassifier:
+    """ML model for classifying relationship types"""
+    
+    def predict_relationship_type(self, source_features: np.ndarray, 
+                                target_features: np.ndarray) -> RelationshipType:
+        """Predict relationship type using ML model"""
+        pass
+```
+
+#### 10.5.2 Complex Pattern Resolution Strategies
+
+##### Pattern 1: Multi-Modal Document Complexity
+
+- **Linked Chunking**: Create chunks that preserve figure-caption, table-reference relationships
+- **Cross-Modal Embeddings**: Generate unified embeddings for text+image+metadata combinations
+- **Relationship Preservation**: Maintain Excel cell arrows, annotations, and inter-cell dependencies
+- **Context Awareness**: Ensure related elements are retrieved together
+
+##### Pattern 2: Conflicting Information Handling
+
+- **Conflict Detection Pipeline**: Automated detection of contradictory information
+- **Source Authority Ranking**: ML-based ranking using recency, authority, and consensus
+- **Multi-Perspective Responses**: Present conflicting viewpoints with confidence levels
+- **Temporal Consistency**: Track information evolution over time
+
+##### Pattern 3: Production-Grade Security and Performance
+
+- **Enterprise Security**: Comprehensive data encryption, access control, and audit logging
+- **Scalable Architecture**: Horizontal scaling with load balancing and auto-scaling
+- **Performance Monitoring**: Real-time metrics with alerting and optimization
+- **Compliance Framework**: GDPR, HIPAA, and enterprise security standards
 
 ```yaml
 # .github/workflows/ci-cd.yml
@@ -1950,19 +2411,54 @@ jobs:
 
 ### Appendix C: Future Enhancements
 
-1. **Image Processing**: Add support for image embedding and OCR
-2. **Multi-modal Search**: Combine text and image embeddings
-3. **Fine-tuning**: Custom model training for domain-specific tasks
-4. **Graph RAG**: Incorporate knowledge graph for enhanced retrieval
-5. **Streaming Ingestion**: Real-time document processing
-6. **Multi-language**: Support for non-English documents
-7. **Advanced Analytics**: Usage patterns and query analytics dashboard
+1. **Advanced Multi-Modal Processing**:
+   - Enhanced OCR for complex document layouts
+   - Video content analysis and embedding generation
+   - Audio transcription and semantic understanding
+   - 3D model and CAD file processing
+
+2. **Sophisticated Conflict Resolution**:
+   - Machine learning-based conflict prediction
+   - Temporal knowledge graph for tracking information evolution
+   - Consensus algorithms for reconciling contradictory sources
+   - Real-time fact-checking integration
+
+3. **Enterprise-Grade Capabilities**:
+   - Advanced compliance frameworks (GDPR, HIPAA, SOC 2)
+   - Multi-tenant architecture with data isolation
+   - Advanced audit logging and forensic analysis
+   - Real-time security threat detection
+
+4. **Relationship Modeling Enhancements**:
+   - Graph neural networks for relationship understanding
+   - Cross-document relationship discovery
+   - Temporal relationship tracking
+   - Causal relationship inference
+
+5. **Performance and Scalability**:
+   - Edge computing deployment for low-latency access
+   - Quantum computing integration for similarity search
+   - Advanced caching with predictive pre-loading
+   - Distributed processing across multiple data centers
+
+6. **Advanced Analytics and Intelligence**:
+   - Document quality scoring and improvement suggestions
+   - Content gap analysis and recommendations
+   - Usage pattern analysis and optimization
+   - Predictive query completion and suggestions
+
+7. **Multi-Language and Cultural Adaptation**:
+   - Cross-lingual semantic search capabilities
+   - Cultural context awareness in responses
+   - Right-to-left language support
+   - Regional compliance and data sovereignty
 
 ---
 
 ## Document Control
 
-- Version: 1.0
-- Last Updated: November 9, 2025
-- Next Review: December 9, 2025
-- Status: Draft for Review
+- Version: 2.0
+- Last Updated: November 10, 2025
+- Next Review: December 10, 2025
+- Status: Updated with Enhanced Multi-Modal and Conflict Resolution Capabilities
+- Changes: Added multi-modal processing, conflict resolution, production security, performance optimization, and advanced relationship modeling

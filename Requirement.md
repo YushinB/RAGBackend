@@ -32,5 +32,24 @@ flowchart TD
 # Data Processing
 
 - The system supports processing various data types, including PDFs, text files, Word documents, Markdown files, Excel sheets, and optionally images. It is designed to be extensible to other data types.
+- Please note that all the document can be any kind and even mixing together
 - Raw data is chunked into smaller pieces suitable for vectorization.
 - The speed of data reading, analysis and chunking must be consider 
+
+
+I want to build Multi model Content parsing, the structure content list was
+- Hierachical Text Extraction
+- Image Caption and metadata extraction 
+- Latex quation recognition 
+- Table structure and content parsing  
+
+# Core Algorithm
+
+📄
+Document Parsing
+→
+🧠
+Content Analysis
+→
+🎯
+Intelligent Retrieval
