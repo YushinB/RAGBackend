@@ -6,6 +6,7 @@ This module contains all data models and structures used throughout the applicat
 - Document models (Document, ProcessingStatus, etc.)
 - Query models (Query, QueryResult, etc.)
 - Relationship models (ContentRelationship, RelationshipType, etc.)
+- Chunking configuration (ChunkingConfig, ChunkingStrategy, etc.)
 """
 
 from .base_models import (
@@ -15,6 +16,7 @@ from .base_models import (
     MultiModalContent,
     TextChunk,
 )
+from .chunking_config import BoundaryType, ChunkingConfig, ChunkingStrategy
 from .content_elements import (
     ContentElement,
     ContentElementType,
@@ -27,8 +29,11 @@ from .relationship_manager import RelationshipDetectionConfig, RelationshipManag
 from .table_content import CellReference, CellRelationship, TableContent
 
 __all__ = [
+    "BoundaryType",
     "CellReference",
     "CellRelationship",
+    "ChunkingConfig",
+    "ChunkingStrategy",
     "ChunkType",
     "ContentElement",
     "ContentElementType",

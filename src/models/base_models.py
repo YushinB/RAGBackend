@@ -203,10 +203,11 @@ class ChunkType(Enum):
 @dataclass
 class TextChunk:
     """
-    Represents a chunk of text with metadata and relationships.
+    Enhanced chunk of text with metadata and multi-modal relationships.
 
     This is the fundamental unit for text processing, embedding, and retrieval.
     Chunks preserve context, position, and relationships to multi-modal content.
+    Supports relationship-aware chunking and semantic chunking strategies.
 
     Attributes:
         chunk_id: Unique identifier for the chunk
@@ -214,11 +215,17 @@ class TextChunk:
         chunk_type: Type of chunk (from ChunkType enum)
         position: Position information in source document
         hierarchy: Document hierarchy context
-        metadata: Additional metadata (token count, language, etc.)
+        metadata: Additional metadata (token count, language, semantic info, etc.)
         relationships: IDs of related content elements
         confidence_score: Confidence in chunk quality (0.0 to 1.0)
         created_at: Timestamp when chunk was created
         source_document_id: ID of the source document
+        parent_chunk_id: ID of parent chunk in hierarchical structure
+        child_chunk_ids: IDs of child chunks in hierarchical structure
+        prev_chunk_id: ID of previous chunk in sequence
+        next_chunk_id: ID of next chunk in sequence
+        multi_modal_refs: References to multi-modal elements (images, tables, equations)
+        chunking_strategy: Strategy used to create this chunk
     """
 
     text: str
@@ -231,6 +238,13 @@ class TextChunk:
     chunk_id: str = field(default_factory=lambda: str(uuid4()))
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     source_document_id: str | None = None
+    # Enhanced fields for T4.1.2
+    parent_chunk_id: str | None = None
+    child_chunk_ids: list[str] = field(default_factory=list)
+    prev_chunk_id: str | None = None
+    next_chunk_id: str | None = None
+    multi_modal_refs: dict[str, list[str]] = field(default_factory=dict)
+    chunking_strategy: str | None = None
 
     def __post_init__(self) -> None:
         """Validate chunk data after initialization."""
@@ -255,6 +269,77 @@ class TextChunk:
         if content_id not in self.relationships:
             self.relationships.append(content_id)
 
+    def add_multi_modal_ref(self, ref_type: str, ref_id: str) -> None:
+        """
+        Add a reference to a multi-modal element.
+
+        Args:
+            ref_type: Type of reference (e.g., 'image', 'table', 'equation')
+            ref_id: ID of the referenced element
+        """
+        if ref_type not in self.multi_modal_refs:
+            self.multi_modal_refs[ref_type] = []
+        if ref_id not in self.multi_modal_refs[ref_type]:
+            self.multi_modal_refs[ref_type].append(ref_id)
+
+    def add_child_chunk(self, child_id: str) -> None:
+        """
+        Add a child chunk ID to this chunk (for hierarchical chunking).
+
+        Args:
+            child_id: ID of the child chunk
+        """
+        if child_id not in self.child_chunk_ids:
+            self.child_chunk_ids.append(child_id)
+
+    def set_parent_chunk(self, parent_id: str) -> None:
+        """
+        Set the parent chunk ID (for hierarchical chunking).
+
+        Args:
+            parent_id: ID of the parent chunk
+        """
+        self.parent_chunk_id = parent_id
+
+    def link_to_next(self, next_id: str) -> None:
+        """
+        Link this chunk to the next chunk in sequence.
+
+        Args:
+            next_id: ID of the next chunk
+        """
+        self.next_chunk_id = next_id
+
+    def link_to_prev(self, prev_id: str) -> None:
+        """
+        Link this chunk to the previous chunk in sequence.
+
+        Args:
+            prev_id: ID of the previous chunk
+        """
+        self.prev_chunk_id = prev_id
+
+    def get_multi_modal_refs_by_type(self, ref_type: str) -> list[str]:
+        """
+        Get all multi-modal references of a specific type.
+
+        Args:
+            ref_type: Type of reference to retrieve
+
+        Returns:
+            List of reference IDs for the specified type
+        """
+        return self.multi_modal_refs.get(ref_type, [])
+
+    def has_multi_modal_content(self) -> bool:
+        """
+        Check if this chunk has any multi-modal references.
+
+        Returns:
+            True if chunk has multi-modal references, False otherwise
+        """
+        return len(self.multi_modal_refs) > 0
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
@@ -268,6 +353,12 @@ class TextChunk:
             "confidence_score": self.confidence_score,
             "created_at": self.created_at.isoformat(),
             "source_document_id": self.source_document_id,
+            "parent_chunk_id": self.parent_chunk_id,
+            "child_chunk_ids": self.child_chunk_ids,
+            "prev_chunk_id": self.prev_chunk_id,
+            "next_chunk_id": self.next_chunk_id,
+            "multi_modal_refs": self.multi_modal_refs,
+            "chunking_strategy": self.chunking_strategy,
         }
 
     def get_context_summary(self) -> str:
