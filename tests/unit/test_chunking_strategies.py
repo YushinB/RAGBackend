@@ -8,11 +8,7 @@ This module tests:
 - ChunkerFactory
 """
 
-import pytest
-
 from src.models.base_models import (
-    ChunkType,
-    ContentPosition,
     DocumentHierarchy,
     MultiModalContent,
     TextChunk,
@@ -50,7 +46,7 @@ class TestRelationshipAwareChunker:
             "The data demonstrates a clear trend in the measurements. "
             "As seen in Figure 1, the values increase over time."
         )
-        
+
         content = MultiModalContent(document_id="doc-001")
         content.add_text_chunk(TextChunk(text=text))
 
@@ -58,11 +54,11 @@ class TestRelationshipAwareChunker:
 
         # Should have chunks with figure references
         assert len(chunks) > 0
-        
+
         # Find chunk with figure reference
         fig_chunks = [c for c in chunks if "Figure 1" in c.text]
         assert len(fig_chunks) > 0
-        
+
         # Check that multi-modal refs are added
         for chunk in fig_chunks:
             assert chunk.has_multi_modal_content() or "Figure" in chunk.text
@@ -126,7 +122,9 @@ class TestRelationshipAwareChunker:
         config = ChunkingConfig(chunk_size=200)
         chunker = RelationshipAwareChunker(config)
 
-        text = "See Figure 1 and Table 2 for details. This references multiple elements."
+        text = (
+            "See Figure 1 and Table 2 for details. This references multiple elements."
+        )
         content = MultiModalContent(document_id="doc-005")
         content.add_text_chunk(TextChunk(text=text))
 
@@ -135,7 +133,9 @@ class TestRelationshipAwareChunker:
         # Check metadata
         for chunk in chunks:
             if "Figure" in chunk.text or "Table" in chunk.text:
-                assert "has_references" in chunk.metadata or len(chunk.relationships) > 0
+                assert (
+                    "has_references" in chunk.metadata or len(chunk.relationships) > 0
+                )
 
 
 class TestLinkedChunker:
@@ -292,7 +292,9 @@ class TestSemanticChunker:
         chunker = SemanticChunker(config)
 
         # Create content with hierarchy
-        hierarchy1 = DocumentHierarchy(level=1, title="Introduction", section_number="1")
+        hierarchy1 = DocumentHierarchy(
+            level=1, title="Introduction", section_number="1"
+        )
         hierarchy2 = DocumentHierarchy(level=1, title="Methods", section_number="2")
 
         content = MultiModalContent(document_id="doc-013")
@@ -456,7 +458,7 @@ class TestChunkingIntegration:
 
         # Verify complete chain
         assert len(chunks) > 1
-        
+
         # Check that all chunks are connected
         for i in range(len(chunks) - 1):
             assert chunks[i].next_chunk_id is not None
@@ -473,7 +475,10 @@ class TestChunkingIntegration:
 
         content = MultiModalContent(document_id="doc-018")
         content.add_text_chunk(
-            TextChunk(text="Introduction paragraph one.\n\nIntroduction paragraph two.", hierarchy=intro)
+            TextChunk(
+                text="Introduction paragraph one.\n\nIntroduction paragraph two.",
+                hierarchy=intro,
+            )
         )
         content.add_text_chunk(
             TextChunk(text="Methods description here.", hierarchy=methods)
@@ -483,7 +488,7 @@ class TestChunkingIntegration:
 
         # Check that structure is preserved
         assert len(chunks) >= 1
-        
+
         # Verify hierarchy information is maintained
         for chunk in chunks:
             if chunk.hierarchy:
@@ -496,12 +501,9 @@ class TestChunkingIntegration:
 
         # First pass: relationship-aware
         relationship_chunker = RelationshipAwareChunker(config1)
-        
-        text = (
-            "Figure 1 shows the results. " * 20 +
-            "Table 2 contains the data. " * 20
-        )
-        
+
+        text = "Figure 1 shows the results. " * 20 + "Table 2 contains the data. " * 20
+
         content = MultiModalContent(document_id="doc-019")
         content.add_text_chunk(TextChunk(text=text))
 
@@ -521,14 +523,14 @@ class TestChunkingIntegration:
     def test_chunking_with_all_metadata(self):
         """Test that all metadata is properly set across strategies."""
         config = ChunkingConfig.default()
-        
+
         # Test with relationship-aware
         ra_chunker = RelationshipAwareChunker(config)
         text = "See Figure 1 for details."
         content = MultiModalContent(document_id="doc-021")
         content.add_text_chunk(TextChunk(text=text))
         ra_chunks = ra_chunker.chunk(content)
-        
+
         for chunk in ra_chunks:
             assert chunk.chunking_strategy == config.strategy.value
             assert chunk.chunk_id is not None

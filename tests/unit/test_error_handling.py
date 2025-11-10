@@ -8,7 +8,7 @@ and security features.
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -63,9 +63,7 @@ class TestFileValidationError:
 
     def test_initialization(self):
         """Test validation error initialization."""
-        error = FileValidationError(
-            "Invalid file", "test.pdf", {"size": 0}
-        )
+        error = FileValidationError("Invalid file", "test.pdf", {"size": 0})
 
         assert error.error_type == ProcessingErrorType.VALIDATION_ERROR
         assert "Invalid file" in str(error)
@@ -235,13 +233,17 @@ class TestFileValidator:
 
         for path in traversal_paths:
             # These won't exist, but should be caught by traversal check
-            # Mock exists() to return True for this test
+            # Mock exists(), is_file(), and stat() for this test
             with patch.object(Path, "exists", return_value=True):
                 with patch.object(Path, "is_file", return_value=True):
-                    with pytest.raises(SecurityError) as exc_info:
-                        validator.validate_file(path)
+                    # Mock stat() to return a valid stat result
+                    mock_stat = MagicMock()
+                    mock_stat.st_size = 1000
+                    with patch.object(Path, "stat", return_value=mock_stat):
+                        with pytest.raises(SecurityError) as exc_info:
+                            validator.validate_file(path)
 
-                    assert "traversal" in str(exc_info.value).lower()
+                        assert "traversal" in str(exc_info.value).lower()
 
     def test_validate_path_length(self):
         """Test validation of path length."""
@@ -437,9 +439,7 @@ class TestErrorHandler:
         handler = ErrorHandler()
 
         with pytest.raises(ProcessingError) as exc_info:
-            handler.handle_error(
-                ValueError("File is corrupt or invalid"), "test.pdf"
-            )
+            handler.handle_error(ValueError("File is corrupt or invalid"), "test.pdf")
 
         error = exc_info.value
         assert error.error_type == ProcessingErrorType.FILE_CORRUPTED
@@ -528,9 +528,7 @@ class TestIntegration:
         validator = FileValidator(config)
 
         # Create valid file
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("Valid content\n" * 10)
             temp_path = f.name
 
@@ -549,9 +547,7 @@ class TestIntegration:
         validator = FileValidator(config)
 
         # File with wrong extension and too large
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("x" * 200)
             temp_path = f.name
 

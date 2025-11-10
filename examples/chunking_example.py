@@ -11,7 +11,6 @@ Together to create a comprehensive chunking pipeline.
 
 from src.models.base_models import (
     ChunkType,
-    ContentPosition,
     DocumentHierarchy,
     MultiModalContent,
     TextChunk,
@@ -83,11 +82,11 @@ def example_linked_chunking():
     This is the first paragraph of our document. It introduces the main topic
     and provides context for the following sections. The content flows naturally
     from one idea to the next.
-    
+
     The second paragraph builds on the introduction. It presents supporting
     evidence and examples that reinforce the main points. Each sentence connects
     to create a coherent narrative.
-    
+
     Finally, the third paragraph concludes the discussion. It summarizes the
     key findings and suggests directions for future work. The circular structure
     brings closure to the document.
@@ -102,9 +101,15 @@ def example_linked_chunking():
     print(f"Created {len(chunks)} linked chunks:\n")
     for i, chunk in enumerate(chunks, 1):
         print(f"Chunk {i} (ID: {chunk.chunk_id[:8]}...):")
-        print(f"  Previous: {chunk.prev_chunk_id[:8] if chunk.prev_chunk_id else 'None'}...")
-        print(f"  Next: {chunk.next_chunk_id[:8] if chunk.next_chunk_id else 'None'}...")
-        print(f"  Parent: {chunk.parent_chunk_id[:8] if chunk.parent_chunk_id else 'None'}...")
+        print(
+            f"  Previous: {chunk.prev_chunk_id[:8] if chunk.prev_chunk_id else 'None'}..."
+        )
+        print(
+            f"  Next: {chunk.next_chunk_id[:8] if chunk.next_chunk_id else 'None'}..."
+        )
+        print(
+            f"  Parent: {chunk.parent_chunk_id[:8] if chunk.parent_chunk_id else 'None'}..."
+        )
         print(f"  Text length: {len(chunk.text)} chars")
         print()
 
@@ -185,7 +190,9 @@ def example_semantic_chunking():
     for i, chunk in enumerate(chunks, 1):
         print(f"Chunk {i}:")
         if chunk.hierarchy:
-            print(f"  Section: {chunk.hierarchy.section_number} - {chunk.hierarchy.title}")
+            print(
+                f"  Section: {chunk.hierarchy.section_number} - {chunk.hierarchy.title}"
+            )
         print(f"  Type: {chunk.chunk_type.value}")
         print(f"  Boundary: {chunk.metadata.get('boundary_type', 'unknown')}")
         print(f"  Text: {chunk.text[:80]}...")
@@ -203,14 +210,17 @@ def example_combined_pipeline():
     ra_config = ChunkingConfig(chunk_size=400, chunk_overlap=50)
     ra_chunker = ChunkerFactory.create_relationship_aware_chunker(ra_config)
 
-    text = """
+    text = (
+        """
     Figure 1 shows the experimental setup used in our study. The apparatus
     consists of three main components as labeled in Figure 1. Table 1 provides
     detailed specifications for each component. According to Table 1, the
     temperature range was 20-100°C. The relationship is defined by Equation 1
     which relates temperature to reaction rate. Using Equation 1, we can predict
     outcomes under various conditions.
-    """ * 3  # Repeat to make it longer
+    """
+        * 3
+    )  # Repeat to make it longer
 
     content = MultiModalContent(document_id="example-004")
     content.add_text_chunk(TextChunk(text=text.strip()))
@@ -245,10 +255,10 @@ def example_combined_pipeline():
     # Display final results
     print("Final Pipeline Results:")
     print(f"  Total chunks: {len(final_chunks)}")
-    
+
     multi_modal_count = sum(1 for c in final_chunks if c.has_multi_modal_content())
     print(f"  Chunks with multi-modal refs: {multi_modal_count}")
-    
+
     linked_count = sum(1 for c in final_chunks if c.next_chunk_id or c.prev_chunk_id)
     print(f"  Linked chunks: {linked_count}")
 
@@ -263,7 +273,7 @@ def example_custom_strategy():
     base_config = ChunkingConfig.default()
     code_config = base_config.adjust_for_content_type("code")
 
-    print(f"Code-optimized config:")
+    print("Code-optimized config:")
     print(f"  Strategy: {code_config.strategy.value}")
     print(f"  Chunk size: {code_config.chunk_size}")
     print(f"  Overlap: {code_config.chunk_overlap}")
@@ -273,7 +283,7 @@ def example_custom_strategy():
     # For markdown content
     markdown_config = base_config.adjust_for_content_type("markdown")
 
-    print(f"\nMarkdown-optimized config:")
+    print("\nMarkdown-optimized config:")
     print(f"  Strategy: {markdown_config.strategy.value}")
     print(f"  Boundary type: {markdown_config.boundary_type.value}")
     print(f"  Respect section boundaries: {markdown_config.respect_section_boundaries}")

@@ -13,7 +13,6 @@ from src.processors.factory import (
     ProcessorFactory,
     ProcessorFactoryBuilder,
     get_default_factory,
-    process_file,
 )
 
 
@@ -81,7 +80,7 @@ def example_automatic_processing():
             print(f"  → Processor: {processor.__class__.__name__}")
             print(f"  → Can process: {processor.can_process(filename)}")
         else:
-            print(f"  → No processor available")
+            print("  → No processor available")
 
         print()
 

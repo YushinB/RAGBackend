@@ -114,7 +114,9 @@ class TestChunkingConfigValidation:
 
     def test_invalid_max_less_than_min(self):
         """Test that max < min raises error."""
-        with pytest.raises(ValueError, match="max_chunk_size must be >= min_chunk_size"):
+        with pytest.raises(
+            ValueError, match="max_chunk_size must be >= min_chunk_size"
+        ):
             ChunkingConfig(min_chunk_size=100, max_chunk_size=50)
 
     def test_invalid_chunk_size_too_small(self):
@@ -149,7 +151,8 @@ class TestChunkingConfigStrategyValidation:
     def test_semantic_requires_sentence_boundaries(self):
         """Test that semantic strategy requires sentence boundaries."""
         with pytest.raises(
-            ValueError, match="Semantic strategy requires respect_sentence_boundaries=True"
+            ValueError,
+            match="Semantic strategy requires respect_sentence_boundaries=True",
         ):
             ChunkingConfig(
                 strategy=ChunkingStrategy.SEMANTIC,

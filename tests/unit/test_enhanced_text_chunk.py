@@ -8,9 +8,6 @@ This module tests the enhanced TextChunk functionality including:
 - Chunking strategy tracking
 """
 
-import pytest
-from datetime import datetime, UTC
-
 from src.models.base_models import (
     ChunkType,
     ContentPosition,

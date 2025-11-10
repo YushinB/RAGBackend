@@ -12,7 +12,7 @@ This module implements T5.1.1 and T5.1.2:
 import logging
 import mimetypes
 from pathlib import Path
-from typing import Any, Protocol, Type
+from typing import Any, Protocol
 
 from src.models.base_models import MultiModalContent
 from src.processors.base import DataProcessor
@@ -20,8 +20,6 @@ from src.processors.error_handling import (
     ErrorHandler,
     FileValidator,
     ProcessingErrorType,
-    ValidationConfig,
-    validate_file_path,
 )
 from src.processors.excel_processor import ExcelProcessor
 from src.processors.markdown_processor import MarkdownProcessor
@@ -55,7 +53,7 @@ class ProcessorRegistry:
 
     def __init__(self):
         """Initialize the processor registry."""
-        self._processors: dict[str, Type[DataProcessor]] = {}
+        self._processors: dict[str, type[DataProcessor]] = {}
         self._extension_map: dict[str, str] = {}
         self._mime_type_map: dict[str, str] = {}
 
@@ -113,7 +111,7 @@ class ProcessorRegistry:
     def register_processor(
         self,
         name: str,
-        processor_class: Type[DataProcessor],
+        processor_class: type[DataProcessor],
         extensions: list[str],
         mime_types: list[str] | None = None,
     ) -> None:
@@ -166,7 +164,7 @@ class ProcessorRegistry:
             mime: proc for mime, proc in self._mime_type_map.items() if proc != name
         }
 
-    def get_processor_by_name(self, name: str) -> Type[DataProcessor] | None:
+    def get_processor_by_name(self, name: str) -> type[DataProcessor] | None:
         """
         Get processor class by name.
 
@@ -178,7 +176,7 @@ class ProcessorRegistry:
         """
         return self._processors.get(name)
 
-    def get_processor_by_extension(self, extension: str) -> Type[DataProcessor] | None:
+    def get_processor_by_extension(self, extension: str) -> type[DataProcessor] | None:
         """
         Get processor class by file extension.
 
@@ -197,7 +195,7 @@ class ProcessorRegistry:
             return self._processors.get(processor_name)
         return None
 
-    def get_processor_by_mime_type(self, mime_type: str) -> Type[DataProcessor] | None:
+    def get_processor_by_mime_type(self, mime_type: str) -> type[DataProcessor] | None:
         """
         Get processor class by MIME type.
 
@@ -427,7 +425,7 @@ class ProcessorFactory:
     def register_custom_processor(
         self,
         name: str,
-        processor_class: Type[DataProcessor],
+        processor_class: type[DataProcessor],
         extensions: list[str],
         mime_types: list[str] | None = None,
     ) -> None:
@@ -457,10 +455,12 @@ class ProcessorFactoryBuilder:
         self._error_handler: ErrorHandler | None = None
         self._enable_validation: bool = True
         self._custom_processors: list[
-            tuple[str, Type[DataProcessor], list[str], list[str] | None]
+            tuple[str, type[DataProcessor], list[str], list[str] | None]
         ] = []
 
-    def with_custom_registry(self, registry: ProcessorRegistry) -> "ProcessorFactoryBuilder":
+    def with_custom_registry(
+        self, registry: ProcessorRegistry
+    ) -> "ProcessorFactoryBuilder":
         """
         Use a custom processor registry.
 
@@ -486,7 +486,9 @@ class ProcessorFactoryBuilder:
         self._validator = validator
         return self
 
-    def with_error_handler(self, error_handler: ErrorHandler) -> "ProcessorFactoryBuilder":
+    def with_error_handler(
+        self, error_handler: ErrorHandler
+    ) -> "ProcessorFactoryBuilder":
         """
         Use a custom error handler.
 
@@ -515,7 +517,7 @@ class ProcessorFactoryBuilder:
     def with_processor(
         self,
         name: str,
-        processor_class: Type[DataProcessor],
+        processor_class: type[DataProcessor],
         extensions: list[str],
         mime_types: list[str] | None = None,
     ) -> "ProcessorFactoryBuilder":

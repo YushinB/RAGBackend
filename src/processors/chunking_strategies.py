@@ -11,7 +11,6 @@ All strategies maintain context, relationships, and support multi-modal content.
 
 import re
 from typing import Any
-from uuid import uuid4
 
 from src.models.base_models import (
     ChunkType,
@@ -406,8 +405,7 @@ class LinkedChunker(BaseChunker):
 
         # Find sentence endings
         sentence_endings = [
-            m.end() + search_start
-            for m in re.finditer(r"[.!?]\s+", search_text)
+            m.end() + search_start for m in re.finditer(r"[.!?]\s+", search_text)
         ]
 
         if not sentence_endings:
@@ -788,13 +786,12 @@ class ChunkerFactory:
         """
         if config.strategy == ChunkingStrategy.FIXED_SIZE:
             return LinkedChunker(config)  # Use linked for fixed size
-        elif config.strategy == ChunkingStrategy.SENTENCE:
-            return SemanticChunker(config)
-        elif config.strategy == ChunkingStrategy.PARAGRAPH:
-            return SemanticChunker(config)
-        elif config.strategy == ChunkingStrategy.SEMANTIC:
-            return SemanticChunker(config)
-        elif config.strategy == ChunkingStrategy.HIERARCHICAL:
+        elif (
+            config.strategy == ChunkingStrategy.SENTENCE
+            or config.strategy == ChunkingStrategy.PARAGRAPH
+            or config.strategy == ChunkingStrategy.SEMANTIC
+            or config.strategy == ChunkingStrategy.HIERARCHICAL
+        ):
             return SemanticChunker(config)
         elif config.strategy == ChunkingStrategy.SLIDING_WINDOW:
             return LinkedChunker(config)
@@ -802,7 +799,9 @@ class ChunkerFactory:
             raise ValueError(f"Unsupported chunking strategy: {config.strategy}")
 
     @staticmethod
-    def create_relationship_aware_chunker(config: ChunkingConfig) -> RelationshipAwareChunker:
+    def create_relationship_aware_chunker(
+        config: ChunkingConfig,
+    ) -> RelationshipAwareChunker:
         """
         Create a relationship-aware chunker.
 

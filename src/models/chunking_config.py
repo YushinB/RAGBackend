@@ -25,7 +25,7 @@ class BoundaryType(Enum):
     """Enumeration of boundary detection types."""
 
     CHARACTER = "character"  # Character count
-    TOKEN = "token"  # Token count (word-based)    
+    TOKEN = "token"  # Token count (word-based)
     SENTENCE = "sentence"  # Sentence boundaries
     PARAGRAPH = "paragraph"  # Paragraph boundaries
     SECTION = "section"  # Section/heading boundaries

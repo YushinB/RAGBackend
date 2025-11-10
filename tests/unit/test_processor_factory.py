@@ -8,12 +8,14 @@ This module tests:
 - Processor registry and plugin system
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
+
+import pytest
 
 from src.models.base_models import MultiModalContent
 from src.processors.base import DataProcessor
+from src.processors.excel_processor import ExcelProcessor
 from src.processors.factory import (
     ProcessorFactory,
     ProcessorFactoryBuilder,
@@ -21,7 +23,6 @@ from src.processors.factory import (
     get_default_factory,
     process_file,
 )
-from src.processors.excel_processor import ExcelProcessor
 from src.processors.markdown_processor import MarkdownProcessor
 from src.processors.pdf_processor import PDFProcessor
 from src.processors.text_processor import TextFileProcessor
@@ -289,9 +290,7 @@ class TestProcessorFactory:
             def extract_text(self, file_path: str) -> str:
                 return "Custom text"
 
-            def extract_multimodal_content(
-                self, file_path: str
-            ) -> MultiModalContent:
+            def extract_multimodal_content(self, file_path: str) -> MultiModalContent:
                 return MultiModalContent(document_id="custom")
 
             def chunk_text(self, text: str, config: dict | None = None) -> list:
@@ -354,9 +353,7 @@ class TestProcessorFactoryBuilder:
             def extract_text(self, file_path: str) -> str:
                 return "Custom text"
 
-            def extract_multimodal_content(
-                self, file_path: str
-            ) -> MultiModalContent:
+            def extract_multimodal_content(self, file_path: str) -> MultiModalContent:
                 return MultiModalContent(document_id="custom")
 
             def chunk_text(self, text: str, config: dict | None = None) -> list:
@@ -366,13 +363,11 @@ class TestProcessorFactoryBuilder:
                 return MultiModalContent(document_id="custom")
 
         builder = ProcessorFactoryBuilder()
-        factory = (
-            builder.with_processor(
-                name="custom",
-                processor_class=CustomProcessor,
-                extensions=[".custom"],
-            ).build()
-        )
+        factory = builder.with_processor(
+            name="custom",
+            processor_class=CustomProcessor,
+            extensions=[".custom"],
+        ).build()
 
         processor = factory.get_processor_for_file("test.custom")
         assert isinstance(processor, CustomProcessor)
@@ -387,9 +382,7 @@ class TestProcessorFactoryBuilder:
             def extract_text(self, file_path: str) -> str:
                 return "Text 1"
 
-            def extract_multimodal_content(
-                self, file_path: str
-            ) -> MultiModalContent:
+            def extract_multimodal_content(self, file_path: str) -> MultiModalContent:
                 return MultiModalContent(document_id="p1")
 
             def chunk_text(self, text: str, config: dict | None = None) -> list:
@@ -405,9 +398,7 @@ class TestProcessorFactoryBuilder:
             def extract_text(self, file_path: str) -> str:
                 return "Text 2"
 
-            def extract_multimodal_content(
-                self, file_path: str
-            ) -> MultiModalContent:
+            def extract_multimodal_content(self, file_path: str) -> MultiModalContent:
                 return MultiModalContent(document_id="p2")
 
             def chunk_text(self, text: str, config: dict | None = None) -> list:
@@ -515,9 +506,7 @@ class TestProcessorFactoryIntegration:
             def extract_text(self, file_path: str) -> str:
                 return "{}"
 
-            def extract_multimodal_content(
-                self, file_path: str
-            ) -> MultiModalContent:
+            def extract_multimodal_content(self, file_path: str) -> MultiModalContent:
                 return MultiModalContent(document_id="json")
 
             def chunk_text(self, text: str, config: dict | None = None) -> list:

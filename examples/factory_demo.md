@@ -79,19 +79,19 @@ from src.models.base_models import MultiModalContent
 class CustomProcessor(DataProcessor):
     def can_process(self, file_path: str) -> bool:
         return file_path.endswith(".custom")
-    
+
     def extract_text(self, file_path: str) -> str:
         # Implementation
         return "extracted text"
-    
+
     def extract_multimodal_content(self, file_path: str) -> MultiModalContent:
         # Implementation
         return MultiModalContent(document_id="custom")
-    
+
     def chunk_text(self, text: str, config: dict | None = None) -> list:
         # Implementation
         return [text]
-    
+
     def process(self, file_path: str, **kwargs) -> MultiModalContent:
         # Implementation
         return MultiModalContent(document_id="custom")
@@ -205,10 +205,10 @@ try:
     # Check if file can be processed
     if not factory.can_process("unknown.xyz"):
         print("File type not supported")
-    
+
     # Process file
     content = factory.process_file("document.pdf")
-    
+
 except FileNotFoundError:
     print("File not found")
 except ValueError as e:

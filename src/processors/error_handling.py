@@ -6,7 +6,6 @@ and security features for the document processing pipeline.
 """
 
 import logging
-import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
