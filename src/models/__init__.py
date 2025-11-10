@@ -22,8 +22,11 @@ from .content_elements import (
     RelationshipType,
 )
 from .image_content import ImageContent
+from .table_content import CellReference, CellRelationship, TableContent
 
 __all__ = [
+    "CellReference",
+    "CellRelationship",
     "ChunkType",
     "ContentElement",
     "ContentElementType",
@@ -33,5 +36,6 @@ __all__ = [
     "ImageContent",
     "MultiModalContent",
     "RelationshipType",
+    "TableContent",
     "TextChunk",
 ]
