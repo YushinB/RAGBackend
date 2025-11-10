@@ -85,14 +85,14 @@
   - **Priority**: Medium
 
 #### 2.2 Relationship Management
-- [ ] **T2.2.1**: Implement `ContentRelationship` system
+- [x] **T2.2.1**: Implement `ContentRelationship` system
   - Create relationship tracking between content elements
   - Implement confidence scoring
   - Add relationship type classification
   - **Estimated Time**: 8 hours
   - **Priority**: High
 
-- [ ] **T2.2.2**: Design relationship preservation algorithms
+- [x] **T2.2.2**: Design relationship preservation algorithms
   - Figure-caption linking logic
   - Table-reference association
   - Excel cell arrow relationship tracking
