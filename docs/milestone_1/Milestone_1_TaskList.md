@@ -77,7 +77,7 @@
   - **Estimated Time**: 10 hours
   - **Priority**: High
 
-- [ ] **T2.1.3**: Implement `EquationContent` class
+- [x] **T2.1.3**: Implement `EquationContent` class
   - Store LaTeX code and rendered text
   - Track equation position in document
   - Capture surrounding context

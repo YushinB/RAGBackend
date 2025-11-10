@@ -23,6 +23,7 @@ from .content_elements import (
 )
 from .equation_content import EquationContent
 from .image_content import ImageContent
+from .relationship_manager import RelationshipDetectionConfig, RelationshipManager
 from .table_content import CellReference, CellRelationship, TableContent
 
 __all__ = [
@@ -37,6 +38,8 @@ __all__ = [
     "EquationContent",
     "ImageContent",
     "MultiModalContent",
+    "RelationshipDetectionConfig",
+    "RelationshipManager",
     "RelationshipType",
     "TableContent",
     "TextChunk",

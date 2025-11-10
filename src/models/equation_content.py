@@ -6,7 +6,9 @@ extracted from documents. EquationContent inherits from ContentElement and adds
 equation-specific attributes and functionality.
 """
 
+import re
 from dataclasses import dataclass
+from typing import Any
 
 from .content_elements import ContentElement, ContentElementType
 
@@ -81,14 +83,15 @@ class EquationContent(ContentElement):
             )
 
         # Build surrounding_context if not provided but context_before/after exist
-        if self.surrounding_context is None:
-            if self.context_before is not None or self.context_after is not None:
-                parts = []
-                if self.context_before:
-                    parts.append(self.context_before.strip())
-                if self.context_after:
-                    parts.append(self.context_after.strip())
-                self.surrounding_context = " ... ".join(parts)
+        if self.surrounding_context is None and (
+            self.context_before is not None or self.context_after is not None
+        ):
+            parts = []
+            if self.context_before:
+                parts.append(self.context_before.strip())
+            if self.context_after:
+                parts.append(self.context_after.strip())
+            self.surrounding_context = " ... ".join(parts)
 
     def has_latex_code(self) -> bool:
         """
@@ -125,9 +128,7 @@ class EquationContent(ContentElement):
             True if any context exists, False otherwise
         """
         return bool(
-            self.surrounding_context
-            or self.context_before
-            or self.context_after
+            self.surrounding_context or self.context_before or self.context_after
         )
 
     def get_full_context(self) -> str:
@@ -183,18 +184,11 @@ class EquationContent(ContentElement):
             return []
 
         # Simple variable extraction: single letters (a-z, A-Z)
-        import re
-
         # Match single letters that are likely variables
-        # Exclude common LaTeX commands
-        pattern = r'\b([a-zA-Z])\b'
+        pattern = r"\b([a-zA-Z])\b"
         matches = re.findall(pattern, self.latex_code)
 
-        # Remove common LaTeX keywords
-        latex_keywords = {
-            'e', 'i', 'n', 'x', 'y', 'z',  # Keep these as they're often variables
-        }
-        variables = sorted(set(m for m in matches if len(m) == 1))
+        variables = sorted({m for m in matches if len(m) == 1})
 
         return variables
 
@@ -216,11 +210,7 @@ class EquationContent(ContentElement):
         """
         return not self.is_inline
 
-    def set_context(
-        self,
-        before: str | None = None,
-        after: str | None = None
-    ) -> None:
+    def set_context(self, before: str | None = None, after: str | None = None) -> None:
         """
         Set the surrounding context for the equation.
 
@@ -243,7 +233,7 @@ class EquationContent(ContentElement):
                 parts.append(self.context_after.strip())
             self.surrounding_context = " ... ".join(parts)
 
-    def to_dict(self) -> dict[str, any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert equation content to dictionary format.
 
