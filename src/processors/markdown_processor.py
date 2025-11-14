@@ -353,10 +353,10 @@ class MarkdownProcessor(DataProcessor):
 
             # Create ImageContent
             img_content = ImageContent(
-                element_id=str(uuid4()),
+                id=str(uuid4()),
                 element_type=ContentElementType.IMAGE,
                 image_data=image_data,
-                format=(
+                image_format=(
                     Path(image_url).suffix.lstrip(".")
                     if "." in image_url
                     else "unknown"
@@ -365,8 +365,8 @@ class MarkdownProcessor(DataProcessor):
                 caption=title,
                 position=ContentPosition(
                     page_number=None,
-                    paragraph_number=0,
-                    character_offset=match.start(),
+                    paragraph_index=0,
+                    char_start=match.start(),
                 ),
                 metadata={
                     "source": "markdown",
@@ -472,14 +472,14 @@ class MarkdownProcessor(DataProcessor):
 
             # Create TableContent
             return TableContent(
-                element_id=str(uuid4()),
+                id=str(uuid4()),
                 element_type=ContentElementType.TABLE,
                 headers=headers,
                 rows=rows,
                 position=ContentPosition(
                     page_number=None,
-                    paragraph_number=table_index,
-                    character_offset=0,
+                    paragraph_index=table_index,
+                    char_start=0,
                 ),
                 metadata={
                     "source": "markdown_table",

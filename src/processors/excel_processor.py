@@ -418,14 +418,14 @@ class ExcelProcessor(DataProcessor):
 
         # Create TableContent
         table = TableContent(
-            element_id=str(uuid4()),
+            id=str(uuid4()),
             element_type=ContentElementType.TABLE,
             headers=headers,
             rows=rows,
             position=ContentPosition(
                 page_number=sheet_index,
-                paragraph_number=0,
-                character_offset=0,
+                paragraph_index=0,
+                char_start=0,
             ),
             metadata={
                 "source": "excel_sheet",

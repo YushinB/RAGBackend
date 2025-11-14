@@ -361,14 +361,14 @@ class WordProcessor(DataProcessor):
 
                     # Create ImageContent
                     img_content = ImageContent(
-                        element_id=str(uuid4()),
+                        id=str(uuid4()),
                         element_type=ContentElementType.IMAGE,
                         image_data=image_data,
-                        format=format_str,
+                        image_format=format_str,
                         position=ContentPosition(
                             page_number=None,
-                            paragraph_number=0,
-                            character_offset=img_index,
+                            paragraph_index=0,
+                            char_start=img_index,
                         ),
                         metadata={
                             "source": "word_document",
@@ -415,14 +415,14 @@ class WordProcessor(DataProcessor):
 
                 # Create TableContent
                 table_content = TableContent(
-                    element_id=str(uuid4()),
+                    id=str(uuid4()),
                     element_type=ContentElementType.TABLE,
                     headers=headers,
                     rows=data_rows,
                     position=ContentPosition(
                         page_number=None,
-                        paragraph_number=table_index,
-                        character_offset=0,
+                        paragraph_index=table_index,
+                        char_start=0,
                     ),
                     metadata={
                         "source": "word_document",
@@ -480,13 +480,13 @@ class WordProcessor(DataProcessor):
 
                             # Create EquationContent
                             equation = EquationContent(
-                                element_id=str(uuid4()),
+                                id=str(uuid4()),
                                 element_type=ContentElementType.EQUATION,
                                 latex_code=math_text,  # This is OMML, not LaTeX
                                 position=ContentPosition(
                                     page_number=None,
-                                    paragraph_number=para_index,
-                                    character_offset=0,
+                                    paragraph_index=para_index,
+                                    char_start=0,
                                 ),
                                 context=context,
                                 metadata={

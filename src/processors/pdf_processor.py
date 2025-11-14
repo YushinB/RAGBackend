@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from pypdf import PdfReader
+import fitz  # PyMuPDF
 
+from src.core.debug_logger import DebugConfig, PDFDebugLogger, debug_operation, get_debug_logger
 from src.models.base_models import (
     ChunkType,
     ContentPosition,
@@ -53,18 +54,29 @@ class PDFProcessor(DataProcessor):
                 - extract_tables: Whether to extract tables (default: True)
                 - extract_equations: Whether to extract equations (default: True)
                 - max_image_size: Maximum image size in bytes (default: 10MB)
+                - debug: Enable debug logging (default: False)
+                - debug_level: Debug logging level (default: "DEBUG")
         """
         super().__init__(**config)
         self.extract_images = config.get("extract_images", True)
         self.extract_tables = config.get("extract_tables", True)
         self.extract_equations = config.get("extract_equations", True)
         self.max_image_size = config.get("max_image_size", 10 * 1024 * 1024)
+        
+        # Initialize debug logging
+        debug_enabled = config.get("debug", False)
+        debug_level = config.get("debug_level", "DEBUG")
+        if debug_enabled:
+            self.debug_logger = PDFDebugLogger(level=debug_level)
+            self.debug_logger.logger.info(f"PDF Processor initialized with debug logging enabled")
+        else:
+            self.debug_logger = get_debug_logger()
 
     def can_process(self, file_path: Path | str) -> bool:
         """
         Determine if this processor can handle the given file.
 
-        Checks both file extension (.pdf) and magic bytes (PDF signature).
+        Checks both file extension (.pdf) and uses PyMuPDF to validate PDF format.
 
         Args:
             file_path: Path to the file to check
@@ -82,14 +94,15 @@ class PDFProcessor(DataProcessor):
         if not path.exists():
             return True
 
-        # Check magic bytes for PDF signature
+        # Use PyMuPDF to validate PDF
         try:
-            with open(path, "rb") as f:
-                magic_bytes = f.read(4)
-                return magic_bytes == b"%PDF"
-        except OSError:
+            doc = fitz.open(str(path))
+            doc.close()
+            return True
+        except Exception:
             return False
 
+    @debug_operation("PDF Text Extraction")
     def extract_text(self, file_path: Path | str) -> str:
         """
         Extract all text content from the PDF file.
@@ -107,19 +120,31 @@ class PDFProcessor(DataProcessor):
         self.validate_file(file_path)
 
         try:
-            reader = PdfReader(str(file_path))
+            with self.debug_logger.debug_operation("Open PDF Document", file_path=str(file_path)):
+                doc = fitz.open(str(file_path))
+                self.debug_logger.debug_data("PDF Document", f"{len(doc)} pages")
+
             text_parts = []
 
-            for page in reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text_parts.append(page_text)
+            with self.debug_logger.debug_operation("Extract Text from Pages"):
+                for page_num, page in enumerate(doc):
+                    with self.debug_logger.debug_operation(f"Page {page_num + 1}"):
+                        page_text = page.get_text()
+                        if page_text:
+                            text_parts.append(page_text)
+                            self.debug_logger.debug_data(f"Page {page_num + 1} text", page_text, preview_length=100)
 
-            return "\n\n".join(text_parts)
+            doc.close()
+            
+            full_text = "\n\n".join(text_parts)
+            self.debug_logger.debug_data("Full extracted text", full_text, preview_length=200)
+            return full_text
 
         except Exception as e:
+            self.debug_logger.debug_error("PDF Text Extraction", e, file_path=str(file_path))
             raise ValueError(f"Failed to extract text from PDF: {e}") from e
 
+    @debug_operation("PDF Multimodal Content Extraction")
     def extract_multimodal_content(
         self, file_path: Path | str, document_id: str
     ) -> MultiModalContent:
@@ -143,36 +168,50 @@ class PDFProcessor(DataProcessor):
         self.validate_file(file_path)
 
         try:
-            reader = PdfReader(str(file_path))
-            relationship_manager = RelationshipManager()
+            with self.debug_logger.debug_operation("Open PDF for multimodal extraction", 
+                                                 file_path=str(file_path), 
+                                                 document_id=document_id):
+                doc = fitz.open(str(file_path))
+                relationship_manager = RelationshipManager()
 
-            # Initialize content containers
-            images: list[ImageContent] = []
-            tables: list[TableContent] = []
-            equations: list[EquationContent] = []
-            text_chunks: list[TextChunk] = []
+                # Initialize content containers
+                images: list[ImageContent] = []
+                tables: list[TableContent] = []
+                equations: list[EquationContent] = []
+                text_chunks: list[TextChunk] = []
 
-            # Build document hierarchy
-            hierarchy = self._extract_hierarchy(reader, document_id)
+                # Build document hierarchy
+                with self.debug_logger.debug_operation("Extract document hierarchy"):
+                    hierarchy = self._extract_hierarchy(doc, document_id)
+                    self.debug_logger.debug_data("Document hierarchy", hierarchy)
 
-            # Process each page
-            for page_num, page in enumerate(reader.pages, start=1):
-                # Extract text
-                page_text = page.extract_text() or ""
+                # Process each page
+                with self.debug_logger.debug_operation("Process pages", total_pages=len(doc)):
+                    for page_num in range(len(doc)):
+                        page = doc[page_num]
+                        
+                        with self.debug_logger.debug_operation(f"Process page {page_num + 1}"):
+                            # Extract text
+                            page_text = page.get_text() or ""
+                            self.debug_logger.debug_data(f"Page {page_num + 1} text", page_text, preview_length=100)
 
-                # Extract images from page
-                if self.extract_images:
-                    page_images = self._extract_images_from_page(
-                        page, page_num, document_id
-                    )
-                    images.extend(page_images)
-                    for img in page_images:
-                        relationship_manager.register_element(img)
+                            # Extract images from page
+                            if self.extract_images:
+                                with self.debug_logger.debug_operation("Extract images from page"):
+                                    page_images = self._extract_images_from_page(
+                                        page, page_num + 1, document_id
+                                    )
+                                    images.extend(page_images)
+                                    self.debug_logger.debug_data("Page images", f"Found {len(page_images)} images")
+                                    
+                                    for img in page_images:
+                                        relationship_manager.register_element(img)
 
-                # Extract tables from page
-                if self.extract_tables:
-                    page_tables = self._extract_tables_from_page(
-                        page, page_text, page_num, document_id
+                            # Extract tables from page
+                            if self.extract_tables:
+                                with self.debug_logger.debug_operation("Extract tables from page"):
+                                    page_tables = self._extract_tables_from_page(
+                                        page, page_text, page_num + 1, document_id
                     )
                     tables.extend(page_tables)
                     for table in page_tables:
@@ -181,7 +220,7 @@ class PDFProcessor(DataProcessor):
                 # Extract equations from page
                 if self.extract_equations:
                     page_equations = self._extract_equations_from_page(
-                        page_text, page_num, document_id
+                        page_text, page_num + 1, document_id
                     )
                     equations.extend(page_equations)
                     for eq in page_equations:
@@ -195,27 +234,38 @@ class PDFProcessor(DataProcessor):
                     # Update chunk positions with page number
                     for chunk in page_chunks:
                         if chunk.position:
-                            chunk.position.page_number = page_num
+                            chunk.position.page_number = page_num + 1
                     text_chunks.extend(page_chunks)
 
             # Detect relationships between elements
-            relationships = relationship_manager.detect_all_relationships()
+            relationship_list = relationship_manager.detect_all_relationships()
+            
+            # Convert relationships list to dict format expected by MultiModalContent
+            # MultiModalContent expects dict[str, list[str]] mapping source_id to list of target_ids
+            relationships_dict: dict[str, list[str]] = {}
+            for rel in relationship_list:
+                if rel.source_id not in relationships_dict:
+                    relationships_dict[rel.source_id] = []
+                relationships_dict[rel.source_id].append(rel.target_id)
 
             # Create and return MultiModalContent
-            return MultiModalContent(
+            multimodal_content = MultiModalContent(
                 document_id=document_id,
                 text_chunks=text_chunks,
                 images=images,
                 tables=tables,
                 equations=equations,
-                relationships=relationships,
-                hierarchy=hierarchy,
+                relationships=relationships_dict,
+                hierarchy=[hierarchy],  # Wrap single hierarchy object in list
                 metadata={
                     "processor": self.processor_name,
-                    "page_count": len(reader.pages),
+                    "page_count": len(doc),
                     "file_path": str(file_path),
                 },
             )
+            
+            doc.close()
+            return multimodal_content
 
         except Exception as e:
             raise ValueError(f"Failed to extract content from PDF: {e}") from e
@@ -312,40 +362,43 @@ class PDFProcessor(DataProcessor):
         return chunks
 
     def _extract_hierarchy(
-        self, reader: PdfReader, document_id: str
+        self, doc: fitz.Document, document_id: str
     ) -> DocumentHierarchy:
         """
         Extract document hierarchy from PDF metadata and structure.
 
         Args:
-            reader: PdfReader instance
+            doc: PyMuPDF Document instance
             document_id: Document identifier
 
         Returns:
             DocumentHierarchy object
         """
-        metadata = reader.metadata or {}
+        metadata = doc.metadata
 
         return DocumentHierarchy(
-            document_id=document_id,
-            title=metadata.get("/Title", "Untitled"),
-            sections=[],
+            level=0,  # Root level
+            title=metadata.get("title", "Untitled Document"),
+            section_number=None,
             metadata={
-                "author": metadata.get("/Author", ""),
-                "subject": metadata.get("/Subject", ""),
-                "creator": metadata.get("/Creator", ""),
-                "producer": metadata.get("/Producer", ""),
+                "document_id": document_id,
+                "author": metadata.get("author", ""),
+                "subject": metadata.get("subject", ""),
+                "creator": metadata.get("creator", ""),
+                "producer": metadata.get("producer", ""),
             },
         )
 
     def _extract_images_from_page(
-        self, page: Any, page_num: int, document_id: str
+        self, page: fitz.Page, page_num: int, document_id: str
     ) -> list[ImageContent]:
         """
-        Extract images from a PDF page.
+        Extract images from a PDF page using PyMuPDF.
+        
+        Supports both raster and vector images with better handling.
 
         Args:
-            page: PDF page object
+            page: PyMuPDF Page object
             page_num: Page number
             document_id: Document identifier
 
@@ -355,41 +408,106 @@ class PDFProcessor(DataProcessor):
         images: list[ImageContent] = []
 
         try:
-            # pypdf provides images through the images property
-            if hasattr(page, "images"):
-                for img_index, image in enumerate(page.images):
-                    try:
-                        # Get image data
-                        image_data = image.data
-                        if len(image_data) > self.max_image_size:
-                            continue
-
-                        # Create ImageContent
-                        img_content = ImageContent(
-                            element_id=str(uuid4()),
-                            element_type=ContentElementType.IMAGE,
-                            image_data=image_data,
-                            format=(
-                                image.name.split(".")[-1]
-                                if "." in image.name
-                                else "unknown"
-                            ),
-                            position=ContentPosition(
-                                page_number=page_num,
-                                paragraph_number=0,
-                                character_offset=img_index,
-                            ),
-                            metadata={
-                                "source": "pdf_page",
-                                "page": page_num,
-                                "index": img_index,
-                            },
-                        )
-                        images.append(img_content)
-
-                    except Exception:
-                        # Skip problematic images
+            # Get all images from the page
+            image_list = page.get_images(full=True)
+            
+            for img_index, img in enumerate(image_list):
+                try:
+                    self.debug_logger.debug_stage(f"Processing image {img_index + 1}/{len(image_list)}", 
+                                                page=page_num)
+                    
+                    # Get image reference
+                    xref = img[0]
+                    self.debug_logger.debug_data("Image xref", xref)
+                    
+                    # Extract the image
+                    pix = fitz.Pixmap(page.parent, xref)
+                    self.debug_logger.debug_data("Pixmap created", 
+                                               f"width={pix.width}, height={pix.height}, n={pix.n}, alpha={pix.alpha}")
+                    
+                    # Get image dimensions before we potentially release memory
+                    img_width = img[2] if len(img) > 2 else pix.width
+                    img_height = img[3] if len(img) > 3 else pix.height
+                    self.debug_logger.debug_data("Image dimensions", f"{img_width}x{img_height}")
+                    
+                    # Convert to PNG if not already in a suitable format
+                    if pix.n - pix.alpha < 4:  # GRAY or RGB
+                        self.debug_logger.debug_stage("Converting GRAY/RGB image to PNG")
+                        image_data = pix.tobytes("png")
+                        img_format = "png"
+                    else:  # CMYK: convert to RGB first
+                        self.debug_logger.debug_stage("Converting CMYK image to RGB then PNG")
+                        pix1 = fitz.Pixmap(fitz.csRGB, pix)
+                        image_data = pix1.tobytes("png")
+                        img_format = "png"
+                        pix1 = None  # Release memory
+                    
+                    # Now we can safely release the original pixmap
+                    pix = None  # Release memory
+                    
+                    # Use specialized image processing debug logging
+                    self.debug_logger.debug_image_processing(
+                        img_index + 1, xref, img_width, img_height, img_format, len(image_data)
+                    )
+                    
+                    # Check size limit
+                    if len(image_data) > self.max_image_size:
+                        self.debug_logger.debug_stage(f"Image too large, skipping", 
+                                                    size=len(image_data), 
+                                                    limit=self.max_image_size)
                         continue
+                    
+                    # Try to get image rectangle on the page
+                    img_rect = None
+                    try:
+                        self.debug_logger.debug_stage(f"Getting image rectangles for xref {xref}")
+                        img_rects = page.get_image_rects(xref)
+                        if img_rects:
+                            img_rect = img_rects[0]  # Get first occurrence
+                            self.debug_logger.debug_data("Image rectangle", img_rect)
+                        else:
+                            self.debug_logger.debug_stage("No image rectangles found")
+                    except Exception as rect_error:
+                        self.debug_logger.debug_error("Get image rectangles", rect_error, xref=xref)
+                        # If get_image_rects fails, img_rect remains None
+                        pass
+
+                    print("Creating ImageContent object...")
+                    # Create ImageContent
+                    img_content = ImageContent(
+                        id=str(uuid4()),
+                        element_type=ContentElementType.IMAGE,
+                        image_data=image_data,
+                        image_format=img_format,
+                        position=ContentPosition(
+                            page_number=page_num,
+                            paragraph_index=0,
+                            char_start=img_index,
+                        ),
+                        metadata={
+                            "source": "pdf_page",
+                            "page": page_num,
+                            "index": img_index,
+                            "xref": xref,
+                            "bbox": {
+                                "x0": img_rect.x0,
+                                "y0": img_rect.y0,
+                                "x1": img_rect.x1,
+                                "y1": img_rect.y1,
+                            } if img_rect else None,
+                            "width": img_width,
+                            "height": img_height,
+                        },
+                    )
+                    images.append(img_content)
+                    print(f"Successfully processed image {img_index}")
+
+                except Exception as img_error:
+                    print(f"ERROR processing image {img_index}: {type(img_error).__name__}: {img_error}")
+                    import traceback
+                    traceback.print_exc()
+                    # Skip problematic images
+                    continue
 
         except Exception:
             # If image extraction fails, continue without images
@@ -398,7 +516,7 @@ class PDFProcessor(DataProcessor):
         return images
 
     def _extract_tables_from_page(
-        self, page: Any, page_text: str, page_num: int, document_id: str
+        self, page: fitz.Page, page_text: str, page_num: int, document_id: str
     ) -> list[TableContent]:
         """
         Extract tables from a PDF page using text patterns.
@@ -481,14 +599,14 @@ class PDFProcessor(DataProcessor):
             data_rows = rows[1:]
 
             return TableContent(
-                element_id=str(uuid4()),
+                id=str(uuid4()),
                 element_type=ContentElementType.TABLE,
                 headers=headers,
                 rows=data_rows,
                 position=ContentPosition(
                     page_number=page_num,
-                    paragraph_number=table_index,
-                    character_offset=0,
+                    paragraph_index=table_index,
+                    char_start=0,
                 ),
                 metadata={
                     "source": "pdf_text_parsing",
@@ -537,13 +655,13 @@ class PDFProcessor(DataProcessor):
                 context = page_text[start_pos:end_pos]
 
                 equation = EquationContent(
-                    element_id=str(uuid4()),
+                    id=str(uuid4()),
                     element_type=ContentElementType.EQUATION,
                     latex_code=latex_code.strip(),
                     position=ContentPosition(
                         page_number=page_num,
-                        paragraph_number=0,
-                        character_offset=match.start(),
+                        paragraph_index=0,
+                        char_start=match.start(),
                     ),
                     context=context,
                     metadata={
@@ -566,13 +684,13 @@ class PDFProcessor(DataProcessor):
                 context = page_text[start_pos:end_pos]
 
                 equation = EquationContent(
-                    element_id=str(uuid4()),
+                    id=str(uuid4()),
                     element_type=ContentElementType.EQUATION,
                     latex_code=latex_code.strip(),
                     position=ContentPosition(
                         page_number=page_num,
-                        paragraph_number=0,
-                        character_offset=match.start(),
+                        paragraph_index=0,
+                        char_start=match.start(),
                     ),
                     context=context,
                     metadata={

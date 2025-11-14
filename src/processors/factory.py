@@ -332,9 +332,9 @@ class ProcessorFactory:
         Raises:
             FileValidationError: If file validation fails
             SecurityError: If security checks fail
-            ProcessingError: If processing fails
+            ProcessingError: If processing fails-
             ValueError: If no suitable processor found
-            FileNotFoundError: If file doesn't exist
+            FileNotFoundError: If file doesn't- exist
         """
         logger.info(f"Processing file: {file_path}")
 
@@ -378,7 +378,36 @@ class ProcessorFactory:
 
             # Process the file
             logger.debug(f"Processing with {processor.__class__.__name__}")
-            content = processor.process(file_path)
+            
+            # Generate document ID from filename
+            document_id = str(Path(file_path).stem)
+            
+            # Check if processor has extract_multimodal_content method (for PDF, Word, Excel)
+            if hasattr(processor, 'extract_multimodal_content'):
+                logger.debug(f"Using extract_multimodal_content for {processor.__class__.__name__}")
+                content = processor.extract_multimodal_content(file_path, document_id)
+            else:
+                # Fallback: Extract text only (for simple processors like Text, Markdown)
+                logger.debug(f"Using extract_text fallback for {processor.__class__.__name__}")
+                text = processor.extract_text(file_path)
+                
+                # Create a TextChunk with the extracted text
+                from src.models.base_models import TextChunk, ChunkType
+                text_chunk = TextChunk(
+                    chunk_id=f"{document_id}_chunk_0",
+                    text=text,
+                    chunk_type=ChunkType.PARAGRAPH,
+                    position=0,
+                    metadata={"source": str(file_path)}
+                )
+                
+                # Create MultiModalContent with the text chunk
+                content = MultiModalContent(
+                    document_id=document_id,
+                    metadata={"processor": processor.__class__.__name__, "source_file": str(file_path)}
+                )
+                content.add_text_chunk(text_chunk)
+            
             logger.info(f"Successfully processed: {file_path}")
             return content
 
