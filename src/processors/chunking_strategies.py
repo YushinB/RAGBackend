@@ -255,7 +255,7 @@ class RelationshipAwareChunker(BaseChunker):
             chunk.metadata["has_references"] = True
             chunk.metadata["reference_count"] = len(markers)
             chunk.metadata["reference_types"] = list(
-                set(ref_type for _, _, ref_type, _ in markers)
+                {ref_type for _, _, ref_type, _ in markers}
             )
 
         return chunk
@@ -786,12 +786,12 @@ class ChunkerFactory:
         """
         if config.strategy == ChunkingStrategy.FIXED_SIZE:
             return LinkedChunker(config)  # Use linked for fixed size
-        elif (
-            config.strategy == ChunkingStrategy.SENTENCE
-            or config.strategy == ChunkingStrategy.PARAGRAPH
-            or config.strategy == ChunkingStrategy.SEMANTIC
-            or config.strategy == ChunkingStrategy.HIERARCHICAL
-        ):
+        elif config.strategy in {
+            ChunkingStrategy.SENTENCE,
+            ChunkingStrategy.PARAGRAPH,
+            ChunkingStrategy.SEMANTIC,
+            ChunkingStrategy.HIERARCHICAL,
+        }:
             return SemanticChunker(config)
         elif config.strategy == ChunkingStrategy.SLIDING_WINDOW:
             return LinkedChunker(config)

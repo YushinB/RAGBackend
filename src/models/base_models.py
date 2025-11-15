@@ -186,6 +186,7 @@ class ChunkType(Enum):
     TEXT = "text"  # Plain text content
     HEADING = "heading"  # Section or chapter heading
     PARAGRAPH = "paragraph"  # Regular paragraph
+    SECTION = "section"  # Document section
     LIST_ITEM = "list_item"  # Bullet or numbered list item
     CODE = "code"  # Code block or snippet
     QUOTE = "quote"  # Quoted text or blockquote

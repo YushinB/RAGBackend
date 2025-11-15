@@ -7,13 +7,17 @@ handling cell data, formulas, relationships, arrows, notes, and cross-worksheet 
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from uuid import uuid4
 
 from openpyxl import load_workbook
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
+from src.core.debug_logger import (
+    PDFDebugLogger,
+    get_production_safe_debug_logger,
+)
 from src.models.base_models import (
     ChunkType,
     ContentPosition,
@@ -40,7 +44,7 @@ class ExcelProcessor(DataProcessor):
         processor_name: Human-readable name ('Excel Processor')
     """
 
-    supported_extensions = {"xlsx", "xlsm"}
+    supported_extensions: ClassVar[set[str]] = {"xlsx", "xlsm"}
     processor_name = "Excel Processor"
 
     def __init__(self, **config: Any) -> None:
@@ -53,12 +57,27 @@ class ExcelProcessor(DataProcessor):
                 - extract_comments: Whether to extract comments (default: True)
                 - extract_named_ranges: Whether to extract named ranges (default: True)
                 - include_hidden_sheets: Whether to process hidden sheets (default: False)
+                - debug: Enable debug logging (default: False)
+                - debug_level: Debug logging level (default: "DEBUG")
         """
         super().__init__(**config)
         self.extract_formulas = config.get("extract_formulas", True)
         self.extract_comments = config.get("extract_comments", True)
         self.extract_named_ranges = config.get("extract_named_ranges", True)
         self.include_hidden_sheets = config.get("include_hidden_sheets", False)
+
+        # Initialize debug logging
+        debug_enabled = config.get("debug", False)
+        debug_level = config.get("debug_level", "DEBUG")
+        if debug_enabled:
+            self.debug_logger = PDFDebugLogger(
+                level=debug_level, auto_detect_production=True
+            )
+            self.debug_logger.logger.info(
+                "Excel Processor initialized with debug logging enabled"
+            )
+        else:
+            self.debug_logger = get_production_safe_debug_logger()
 
     def can_process(self, file_path: Path | str) -> bool:
         """
@@ -207,10 +226,10 @@ class ExcelProcessor(DataProcessor):
                 document_id=document_id,
                 text_chunks=text_chunks,
                 images=[],  # Excel images would require additional libraries
-                tables=tables,
+                tables=[table.id for table in tables],
                 equations=[],  # Excel doesn't typically have equations like Word/PDF
-                relationships=relationships,
-                hierarchy=hierarchy,
+                relationships={rel.source_id: [rel.target_id] for rel in relationships},
+                hierarchy=[hierarchy],
                 metadata={
                     "processor": self.processor_name,
                     "sheet_count": len(wb.worksheets),
@@ -261,8 +280,8 @@ class ExcelProcessor(DataProcessor):
         current_chunk = ""
         chunk_index = 0
 
-        for section in sections:
-            section = section.strip()
+        for section_text in sections:
+            section = section_text.strip()
             if not section:
                 continue
 
@@ -322,9 +341,10 @@ class ExcelProcessor(DataProcessor):
             DocumentHierarchy object
         """
         return DocumentHierarchy(
-            document_id=document_id,
             title=Path(wb.path).stem if hasattr(wb, "path") and wb.path else "Untitled",
-            sections=[sheet.title for sheet in wb.worksheets],
+            level=0,
+            content_ids=[],
+            children_ids=[],
             metadata={
                 "sheet_names": [sheet.title for sheet in wb.worksheets],
                 "sheet_count": len(wb.worksheets),

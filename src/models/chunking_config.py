@@ -25,7 +25,7 @@ class BoundaryType(Enum):
     """Enumeration of boundary detection types."""
 
     CHARACTER = "character"  # Character count
-    TOKEN = "token"  # Token count (word-based)
+    TOKEN = "token"  # Token count (word-based)  # nosec B105
     SENTENCE = "sentence"  # Sentence boundaries
     PARAGRAPH = "paragraph"  # Paragraph boundaries
     SECTION = "section"  # Section/heading boundaries
@@ -97,18 +97,22 @@ class ChunkingConfig:
     def _validate_strategy_compatibility(self) -> None:
         """Validate strategy and boundary type compatibility."""
         # Semantic strategy requires sentence boundaries
-        if self.strategy == ChunkingStrategy.SEMANTIC:
-            if not self.respect_sentence_boundaries:
-                raise ValueError(
-                    "Semantic strategy requires respect_sentence_boundaries=True"
-                )
+        if (
+            self.strategy == ChunkingStrategy.SEMANTIC
+            and not self.respect_sentence_boundaries
+        ):
+            raise ValueError(
+                "Semantic strategy requires respect_sentence_boundaries=True"
+            )
 
         # Hierarchical strategy requires section boundaries
-        if self.strategy == ChunkingStrategy.HIERARCHICAL:
-            if not self.respect_section_boundaries:
-                raise ValueError(
-                    "Hierarchical strategy requires respect_section_boundaries=True"
-                )
+        if (
+            self.strategy == ChunkingStrategy.HIERARCHICAL
+            and not self.respect_section_boundaries
+        ):
+            raise ValueError(
+                "Hierarchical strategy requires respect_section_boundaries=True"
+            )
 
     @classmethod
     def default(cls) -> "ChunkingConfig":

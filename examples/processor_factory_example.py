@@ -16,7 +16,7 @@ from src.processors.factory import (
 )
 
 
-def example_basic_usage():
+def example_basic_usage() -> None:
     """
     Example: Basic usage with default factory.
     """
@@ -51,7 +51,7 @@ def example_basic_usage():
         print(f"  {file_path:<20} {status}")
 
 
-def example_automatic_processing():
+def example_automatic_processing() -> None:
     """
     Example: Automatically process files based on type.
     """
@@ -85,7 +85,7 @@ def example_automatic_processing():
         print()
 
 
-def example_custom_processor():
+def example_custom_processor() -> None:
     """
     Example: Register and use a custom processor.
     """
@@ -95,11 +95,11 @@ def example_custom_processor():
     class CSVProcessor(DataProcessor):
         """Custom processor for CSV files."""
 
-        def can_process(self, file_path: str) -> bool:
+        def can_process(self, file_path: Path | str) -> bool:
             """Check if file is a CSV."""
-            return file_path.lower().endswith(".csv")
+            return str(file_path).lower().endswith(".csv")
 
-        def process(self, file_path: str, **kwargs) -> MultiModalContent:
+        def process(self, file_path: Path | str, **kwargs: object) -> MultiModalContent:
             """Process CSV file."""
             print(f"    Processing CSV: {file_path}")
 
@@ -114,7 +114,7 @@ def example_custom_processor():
     factory = ProcessorFactory()
     factory.register_custom_processor(
         name="csv",
-        processor_class=CSVProcessor,
+        processor_class=CSVProcessor,  # type: ignore[type-abstract]
         extensions=[".csv", ".tsv"],
         mime_types=["text/csv", "text/tab-separated-values"],
     )
@@ -132,7 +132,7 @@ def example_custom_processor():
         print(f"  Can process: {processor.can_process(csv_file)}")
 
 
-def example_builder_pattern():
+def example_builder_pattern() -> None:
     """
     Example: Use builder pattern for factory configuration.
     """
@@ -142,20 +142,20 @@ def example_builder_pattern():
     class LatexProcessor(DataProcessor):
         """Process LaTeX documents."""
 
-        def can_process(self, file_path: str) -> bool:
-            return file_path.lower().endswith((".tex", ".latex"))
+        def can_process(self, file_path: Path | str) -> bool:
+            return str(file_path).lower().endswith((".tex", ".latex"))
 
-        def process(self, file_path: str, **kwargs) -> MultiModalContent:
+        def process(self, file_path: Path | str, **kwargs: object) -> MultiModalContent:
             print(f"    Processing LaTeX: {file_path}")
             return MultiModalContent(document_id="latex-doc")
 
     class BibtexProcessor(DataProcessor):
         """Process BibTeX bibliography files."""
 
-        def can_process(self, file_path: str) -> bool:
-            return file_path.lower().endswith(".bib")
+        def can_process(self, file_path: Path | str) -> bool:
+            return str(file_path).lower().endswith(".bib")
 
-        def process(self, file_path: str, **kwargs) -> MultiModalContent:
+        def process(self, file_path: Path | str, **kwargs: object) -> MultiModalContent:
             print(f"    Processing BibTeX: {file_path}")
             return MultiModalContent(document_id="bibtex-doc")
 
@@ -164,13 +164,13 @@ def example_builder_pattern():
         ProcessorFactoryBuilder()
         .with_processor(
             name="latex",
-            processor_class=LatexProcessor,
+            processor_class=LatexProcessor,  # type: ignore[type-abstract]
             extensions=[".tex", ".latex"],
             mime_types=["application/x-latex", "text/x-tex"],
         )
         .with_processor(
             name="bibtex",
-            processor_class=BibtexProcessor,
+            processor_class=BibtexProcessor,  # type: ignore[type-abstract]
             extensions=[".bib"],
             mime_types=["application/x-bibtex"],
         )
@@ -194,7 +194,7 @@ def example_builder_pattern():
             print(f"{filename:<20} → No processor")
 
 
-def example_batch_processing():
+def example_batch_processing() -> None:
     """
     Example: Process multiple files in batch.
     """
@@ -236,7 +236,7 @@ def example_batch_processing():
     print(f"\nResults: {processed} processed, {skipped} skipped")
 
 
-def example_convenience_function():
+def example_convenience_function() -> None:
     """
     Example: Use convenience function for quick processing.
     """
@@ -256,7 +256,7 @@ def example_convenience_function():
     print("Note: Requires actual files to exist for processing")
 
 
-def example_error_handling():
+def example_error_handling() -> None:
     """
     Example: Handle errors gracefully.
     """
@@ -293,7 +293,7 @@ def example_error_handling():
         print()
 
 
-def example_configuration_passing():
+def example_configuration_passing() -> None:
     """
     Example: Pass configuration to processors.
     """
@@ -323,13 +323,14 @@ def example_configuration_passing():
         print(f"File: {file_path}")
         print(f"Config: {config}")
 
-        processor = factory.get_processor_for_file(file_path, **config)
+        processor = factory.get_processor_for_file(file_path)
         if processor:
             print(f"Result: Created {processor.__class__.__name__} with config")
+            # Note: Config would be passed to process() method when called
         print()
 
 
-def main():
+def main() -> None:
     """Run all examples."""
     print("=" * 70)
     print("ProcessorFactory - Integration Examples")

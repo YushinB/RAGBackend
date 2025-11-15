@@ -19,7 +19,7 @@ from src.models.chunking_config import ChunkingConfig, ChunkingStrategy
 from src.processors.chunking_strategies import ChunkerFactory
 
 
-def example_relationship_aware_chunking():
+def example_relationship_aware_chunking() -> None:
     """
     Example: Preserve figure-caption and table-reference associations.
     """
@@ -61,7 +61,7 @@ def example_relationship_aware_chunking():
         print()
 
 
-def example_linked_chunking():
+def example_linked_chunking() -> None:
     """
     Example: Create chunks with sequential and hierarchical links.
     """
@@ -114,7 +114,7 @@ def example_linked_chunking():
         print()
 
 
-def example_semantic_chunking():
+def example_semantic_chunking() -> None:
     """
     Example: Chunk by semantic structure (sentences, paragraphs, sections).
     """
@@ -199,7 +199,7 @@ def example_semantic_chunking():
         print()
 
 
-def example_combined_pipeline():
+def example_combined_pipeline() -> None:
     """
     Example: Use multiple strategies in sequence for optimal chunking.
     """
@@ -263,7 +263,7 @@ def example_combined_pipeline():
     print(f"  Linked chunks: {linked_count}")
 
 
-def example_custom_strategy():
+def example_custom_strategy() -> None:
     """
     Example: Create custom chunking strategy using factory.
     """
@@ -289,7 +289,7 @@ def example_custom_strategy():
     print(f"  Respect section boundaries: {markdown_config.respect_section_boundaries}")
 
 
-def main():
+def main() -> None:
     """Run all examples."""
     print("=" * 70)
     print("Advanced Chunking Strategies - Examples")

@@ -18,16 +18,17 @@ repos:
       - id: check-toml
       - id: debug-statements
 
-  - repo: https://github.com/psf/black
-    rev: 25.11.0
-    hooks:
-      - id: black
-        language_version: python3.13
-        args: [--line-length=88]
+  # Disabled Black in favor of Ruff Format to avoid conflicts
+  # - repo: https://github.com/psf/black
+  #   rev: 25.11.0
+  #   hooks:
+  #     - id: black
+  #       language_version: python3.13
+  #       args: [--line-length=88]
 
   # Ruff linter and formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.4
+    rev: v0.14.5
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]

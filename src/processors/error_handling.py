@@ -68,7 +68,10 @@ class FileValidationError(ProcessingError):
     """Exception raised for file validation errors."""
 
     def __init__(
-        self, message: str, file_path: str | None = None, details: dict | None = None
+        self,
+        message: str,
+        file_path: str | None = None,
+        details: dict[str, Any] | None = None,
     ):
         super().__init__(
             ProcessingErrorType.VALIDATION_ERROR, message, file_path, details
@@ -79,7 +82,10 @@ class SecurityError(ProcessingError):
     """Exception raised for security-related errors."""
 
     def __init__(
-        self, message: str, file_path: str | None = None, details: dict | None = None
+        self,
+        message: str,
+        file_path: str | None = None,
+        details: dict[str, Any] | None = None,
     ):
         super().__init__(
             ProcessingErrorType.SECURITY_ERROR, message, file_path, details
@@ -105,13 +111,13 @@ class ValidationConfig:
     max_file_size: int = 100 * 1024 * 1024  # 100 MB
     min_file_size: int = 0
     allowed_extensions: set[str] | None = None
-    blocked_extensions: set[str] = None
+    blocked_extensions: set[str] | None = None
     scan_for_malware: bool = True
     check_path_traversal: bool = True
     max_path_length: int = 4096
     require_ascii_names: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.blocked_extensions is None:
             # Potentially dangerous extensions
@@ -250,7 +256,10 @@ class FileValidator:
         extension = file_path.suffix.lower()
 
         # Check blocked extensions (security)
-        if extension in self.config.blocked_extensions:
+        if (
+            self.config.blocked_extensions
+            and extension in self.config.blocked_extensions
+        ):
             raise SecurityError(
                 f"Blocked file extension: {extension}",
                 str(file_path),
@@ -258,16 +267,18 @@ class FileValidator:
             )
 
         # Check allowed extensions (if specified)
-        if self.config.allowed_extensions is not None:
-            if extension not in self.config.allowed_extensions:
-                raise FileValidationError(
-                    f"File extension not allowed: {extension}",
-                    str(file_path),
-                    {
-                        "extension": extension,
-                        "allowed": list(self.config.allowed_extensions),
-                    },
-                )
+        if (
+            self.config.allowed_extensions is not None
+            and extension not in self.config.allowed_extensions
+        ):
+            raise FileValidationError(
+                f"File extension not allowed: {extension}",
+                str(file_path),
+                {
+                    "extension": extension,
+                    "allowed": list(self.config.allowed_extensions),
+                },
+            )
 
     def _check_path_traversal(self, file_path: Path) -> None:
         """
@@ -281,13 +292,13 @@ class FileValidator:
         """
         # Resolve to absolute path
         try:
-            resolved_path = file_path.resolve()
+            file_path.resolve()
         except (OSError, RuntimeError) as e:
             raise SecurityError(
                 f"Failed to resolve path: {e}",
                 str(file_path),
                 {"error": str(e)},
-            )
+            ) from e
 
         # Check for suspicious patterns
         path_str = str(file_path)
@@ -451,8 +462,6 @@ class ErrorHandler:
         Returns:
             Appropriate ProcessingErrorType
         """
-        error_type_name = type(error).__name__
-
         if isinstance(error, FileNotFoundError):
             return ProcessingErrorType.FILE_NOT_FOUND
         elif isinstance(error, PermissionError):

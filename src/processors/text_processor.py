@@ -7,7 +7,7 @@ handling encoding detection, structure inference, and basic content extraction.
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from src.models.base_models import (
     ChunkType,
@@ -32,8 +32,8 @@ class TextFileProcessor(DataProcessor):
         processor_name: Human-readable name ('Text File Processor')
     """
 
-    supported_extensions = {"txt", "text", "log"}
-    processor_name = "Text File Processor"
+    supported_extensions: ClassVar[set[str]] = {"txt", "text", "log"}
+    processor_name: ClassVar[str] = "Text File Processor"
 
     def __init__(self, **config: Any) -> None:
         """
@@ -146,8 +146,8 @@ class TextFileProcessor(DataProcessor):
                 images=[],
                 tables=[],
                 equations=[],
-                relationships=[],  # No relationships for plain text
-                hierarchy=hierarchy,
+                relationships={},  # No relationships for plain text
+                hierarchy=[hierarchy],
                 metadata={
                     "processor": self.processor_name,
                     "file_path": str(file_path),
@@ -198,12 +198,12 @@ class TextFileProcessor(DataProcessor):
         chunk_index = 0
 
         for paragraph in paragraphs:
-            paragraph = paragraph.strip()
-            if not paragraph:
+            stripped_para = paragraph.strip()
+            if not stripped_para:
                 continue
 
             # Check if adding this paragraph exceeds chunk size
-            if len(current_chunk) + len(paragraph) > chunk_size and current_chunk:
+            if len(current_chunk) + len(stripped_para) > chunk_size and current_chunk:
                 # Create chunk
                 chunk = TextChunk(
                     text=current_chunk.strip(),
@@ -221,14 +221,14 @@ class TextFileProcessor(DataProcessor):
                 # Start new chunk with overlap
                 if chunk_overlap > 0:
                     overlap_text = current_chunk[-chunk_overlap:]
-                    current_chunk = overlap_text + "\n\n" + paragraph
+                    current_chunk = overlap_text + "\n\n" + stripped_para
                 else:
-                    current_chunk = paragraph
+                    current_chunk = stripped_para
             # Add to current chunk
             elif current_chunk:
-                current_chunk += "\n\n" + paragraph
+                current_chunk += "\n\n" + stripped_para
             else:
-                current_chunk = paragraph
+                current_chunk = stripped_para
 
         # Add final chunk
         if current_chunk:
@@ -316,19 +316,24 @@ class TextFileProcessor(DataProcessor):
             ]
 
             for line in lines:
-                line = line.strip()
-                if not line or len(line) < 5 or len(line) > 100:
+                stripped_line = line.strip()
+                if (
+                    not stripped_line
+                    or len(stripped_line) < 5
+                    or len(stripped_line) > 100
+                ):
                     continue
 
                 for pattern in section_patterns:
-                    if re.match(pattern, line):
-                        sections.append(line)
+                    if re.match(pattern, stripped_line):
+                        sections.append(stripped_line)
                         break
 
         return DocumentHierarchy(
-            document_id=document_id,
             title=title,
-            sections=sections[:20],  # Limit to first 20 sections
+            level=0,
+            content_ids=[],
+            children_ids=[],
             metadata={
                 "section_count": len(sections),
                 "has_structure": len(sections) > 0,

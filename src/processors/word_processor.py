@@ -6,10 +6,10 @@ handling text extraction, images, tables, equations, and cross-references.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from uuid import uuid4
 
-from docx import Document
+from docx import Document  # type: ignore
 
 from src.models.base_models import (
     ChunkType,
@@ -39,8 +39,8 @@ class WordProcessor(DataProcessor):
         processor_name: Human-readable name ('Word Processor')
     """
 
-    supported_extensions = {"docx"}
-    processor_name = "Word Processor"
+    supported_extensions: ClassVar[set[str]] = {"docx"}
+    processor_name: ClassVar[str] = "Word Processor"
 
     def __init__(self, **config: Any) -> None:
         """
@@ -188,11 +188,11 @@ class WordProcessor(DataProcessor):
             return MultiModalContent(
                 document_id=document_id,
                 text_chunks=text_chunks,
-                images=images,
-                tables=tables,
-                equations=equations,
-                relationships=relationships,
-                hierarchy=hierarchy,
+                images=[img.id for img in images],
+                tables=[table.id for table in tables],
+                equations=[eq.id for eq in equations],
+                relationships={rel.source_id: [rel.target_id] for rel in relationships},
+                hierarchy=[hierarchy],
                 metadata={
                     "processor": self.processor_name,
                     "paragraph_count": len(doc.paragraphs),
@@ -245,12 +245,12 @@ class WordProcessor(DataProcessor):
         chunk_index = 0
 
         for paragraph in paragraphs:
-            paragraph = paragraph.strip()
-            if not paragraph:
+            stripped_para = paragraph.strip()
+            if not stripped_para:
                 continue
 
             # Check if adding this paragraph exceeds chunk size
-            if len(current_chunk) + len(paragraph) > chunk_size and current_chunk:
+            if len(current_chunk) + len(stripped_para) > chunk_size and current_chunk:
                 # Create chunk
                 chunk = TextChunk(
                     text=current_chunk.strip(),
@@ -268,14 +268,14 @@ class WordProcessor(DataProcessor):
                 # Start new chunk with overlap
                 if chunk_overlap > 0:
                     overlap_text = current_chunk[-chunk_overlap:]
-                    current_chunk = overlap_text + " " + paragraph
+                    current_chunk = overlap_text + " " + stripped_para
                 else:
-                    current_chunk = paragraph
+                    current_chunk = stripped_para
             # Add to current chunk
             elif current_chunk:
-                current_chunk += "\n\n" + paragraph
+                current_chunk += "\n\n" + stripped_para
             else:
-                current_chunk = paragraph
+                current_chunk = stripped_para
 
         # Add final chunk
         if current_chunk:
@@ -310,9 +310,10 @@ class WordProcessor(DataProcessor):
             title = doc.core_properties.title
 
         return DocumentHierarchy(
-            document_id=document_id,
             title=title,
-            sections=[],
+            level=0,
+            content_ids=[],
+            children_ids=[],
             metadata={
                 "author": doc.core_properties.author or "",
                 "subject": doc.core_properties.subject or "",
@@ -379,7 +380,7 @@ class WordProcessor(DataProcessor):
                     images.append(img_content)
                     img_index += 1
 
-                except Exception:
+                except Exception:  # nosec B112
                     # Skip problematic images
                     continue
 
@@ -433,7 +434,7 @@ class WordProcessor(DataProcessor):
                 )
                 tables.append(table_content)
 
-            except Exception:
+            except Exception:  # nosec B112
                 # Skip problematic tables
                 continue
 
@@ -473,10 +474,10 @@ class WordProcessor(DataProcessor):
 
                         if math_text and len(math_text) > 2:
                             # Get surrounding context
-                            para_text = paragraph.text
-                            context = (
-                                para_text[:500] if len(para_text) > 500 else para_text
-                            )
+                            # para_text = paragraph.text
+                            # context = (
+                            #     para_text[:500] if len(para_text) > 500 else para_text
+                            # )
 
                             # Create EquationContent
                             equation = EquationContent(
@@ -488,7 +489,6 @@ class WordProcessor(DataProcessor):
                                     paragraph_index=para_index,
                                     char_start=0,
                                 ),
-                                context=context,
                                 metadata={
                                     "source": "word_omml",
                                     "paragraph_index": para_index,
@@ -499,7 +499,7 @@ class WordProcessor(DataProcessor):
                             equations.append(equation)
                             eq_index += 1
 
-                    except Exception:
+                    except Exception:  # nosec B112
                         # Skip problematic equations
                         continue
 

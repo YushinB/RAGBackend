@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from src.models.base_models import ChunkType
+from src.processors.base import DataProcessor
 from src.processors.pdf_processor import PDFProcessor
 
 
@@ -332,7 +333,6 @@ class TestPDFProcessorInheritance:
 
     def test_inherits_from_dataprocessor(self):
         """Test that PDFProcessor inherits from DataProcessor."""
-        from src.processors.base import DataProcessor
 
         processor = PDFProcessor()
 

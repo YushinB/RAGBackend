@@ -46,8 +46,12 @@ def check_python_version():
     """Check if Python version meets requirements."""
     print("🔍 Checking Python version...")
 
-    if sys.version_info < (3, 13):
-        print(f"❌ Python 3.13+ required, found {sys.version}")
+    # Require Python 3.13+ for this project
+    required_version = (3, 13)
+    if sys.version_info < required_version:
+        print(
+            f"❌ Python {required_version[0]}.{required_version[1]}+ required, found {sys.version}"
+        )
         sys.exit(1)
 
     print(f"✅ Python {sys.version} meets requirements")

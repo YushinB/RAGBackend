@@ -5,7 +5,6 @@ Tests comprehensive error handling, file validation,
 and security features.
 """
 
-import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -158,7 +157,7 @@ class TestFileValidator:
 
             assert "too small" in str(exc_info.value).lower()
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
     def test_validate_file_too_large(self):
         """Test validation of file too large."""
@@ -175,7 +174,7 @@ class TestFileValidator:
 
             assert "too large" in str(exc_info.value).lower()
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
     def test_validate_blocked_extension(self):
         """Test validation of blocked file extensions."""
@@ -190,7 +189,7 @@ class TestFileValidator:
 
             assert "blocked" in str(exc_info.value).lower()
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
     def test_validate_allowed_extension(self):
         """Test validation with allowed extensions."""
@@ -217,8 +216,8 @@ class TestFileValidator:
 
             assert "not allowed" in str(exc_info.value).lower()
         finally:
-            os.unlink(pdf_path)
-            os.unlink(txt_path)
+            Path(pdf_path).unlink()
+            Path(txt_path).unlink()
 
     def test_validate_path_traversal(self):
         """Test detection of path traversal attempts."""
@@ -234,16 +233,20 @@ class TestFileValidator:
         for path in traversal_paths:
             # These won't exist, but should be caught by traversal check
             # Mock exists(), is_file(), and stat() for this test
-            with patch.object(Path, "exists", return_value=True):
-                with patch.object(Path, "is_file", return_value=True):
-                    # Mock stat() to return a valid stat result
-                    mock_stat = MagicMock()
-                    mock_stat.st_size = 1000
-                    with patch.object(Path, "stat", return_value=mock_stat):
-                        with pytest.raises(SecurityError) as exc_info:
-                            validator.validate_file(path)
+            with (
+                patch.object(Path, "exists", return_value=True),
+                patch.object(Path, "is_file", return_value=True),
+            ):
+                # Mock stat() to return a valid stat result
+                mock_stat = MagicMock()
+                mock_stat.st_size = 1000
+                with (
+                    patch.object(Path, "stat", return_value=mock_stat),
+                    pytest.raises(SecurityError) as exc_info,
+                ):
+                    validator.validate_file(path)
 
-                        assert "traversal" in str(exc_info.value).lower()
+                assert "traversal" in str(exc_info.value).lower()
 
     def test_validate_path_length(self):
         """Test validation of path length."""
@@ -266,7 +269,7 @@ class TestFileValidator:
 
                 assert "too long" in str(exc_info.value).lower()
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
     def test_validate_ascii_filename(self):
         """Test validation of ASCII-only filenames."""
@@ -286,7 +289,7 @@ class TestFileValidator:
 
             assert "non-ascii" in str(exc_info.value).lower()
 
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
         except (OSError, UnicodeError):
             # Skip test if filesystem doesn't support non-ASCII names
             pytest.skip("Filesystem doesn't support non-ASCII filenames")
@@ -306,7 +309,7 @@ class TestFileValidator:
 
             assert "executable" in str(exc_info.value).lower()
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
     def test_validate_malware_scan_elf(self):
         """Test malware scanning detects ELF binaries."""
@@ -323,7 +326,7 @@ class TestFileValidator:
 
             assert "executable" in str(exc_info.value).lower()
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
     def test_validate_malware_scan_disabled(self):
         """Test validation with malware scanning disabled."""
@@ -339,7 +342,7 @@ class TestFileValidator:
             # Should not raise SecurityError
             validator.validate_file(temp_path)
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
     def test_validate_valid_file(self):
         """Test validation of valid file."""
@@ -353,7 +356,7 @@ class TestFileValidator:
             # Should not raise any exception
             validator.validate_file(temp_path)
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
 
 class TestErrorHandler:
@@ -489,7 +492,7 @@ class TestConvenienceFunctions:
             # Should not raise
             validate_file_path(temp_path)
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
     def test_validate_file_path_invalid(self):
         """Test validate_file_path with invalid file."""
@@ -509,7 +512,7 @@ class TestConvenienceFunctions:
             with pytest.raises(FileValidationError):
                 validate_file_path(temp_path, validator)
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
 
 class TestIntegration:
@@ -536,7 +539,7 @@ class TestIntegration:
             # Should pass all validations
             validator.validate_file(temp_path)
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()
 
     def test_multiple_validation_failures(self):
         """Test handling multiple validation failures."""
@@ -556,4 +559,4 @@ class TestIntegration:
             with pytest.raises(FileValidationError):
                 validator.validate_file(temp_path)
         finally:
-            os.unlink(temp_path)
+            Path(temp_path).unlink()

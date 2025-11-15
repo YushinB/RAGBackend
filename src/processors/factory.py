@@ -14,7 +14,7 @@ import mimetypes
 from pathlib import Path
 from typing import Any, Protocol
 
-from src.models.base_models import MultiModalContent
+from src.models.base_models import ChunkType, MultiModalContent, TextChunk
 from src.processors.base import DataProcessor
 from src.processors.error_handling import (
     ErrorHandler,
@@ -51,7 +51,7 @@ class ProcessorRegistry:
     Implements T5.1.2 plugin system.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the processor registry."""
         self._processors: dict[str, type[DataProcessor]] = {}
         self._extension_map: dict[str, str] = {}
@@ -130,8 +130,8 @@ class ProcessorRegistry:
         self._processors[name] = processor_class
 
         # Map extensions to processor name
-        for ext in extensions:
-            ext = ext.lower()
+        for extension in extensions:
+            ext = extension.lower()
             if not ext.startswith("."):
                 ext = f".{ext}"
             self._extension_map[ext] = name
@@ -366,6 +366,9 @@ class ProcessorFactory:
                     file_path,
                     ProcessingErrorType.UNSUPPORTED_FORMAT,
                 )
+                raise ValueError(
+                    f"No suitable processor found for file: {file_path}"
+                )  # Exit early if no processor found
 
             # Verify processor can handle the file
             if not processor.can_process(file_path):
@@ -378,36 +381,42 @@ class ProcessorFactory:
 
             # Process the file
             logger.debug(f"Processing with {processor.__class__.__name__}")
-            
+
             # Generate document ID from filename
             document_id = str(Path(file_path).stem)
-            
+
             # Check if processor has extract_multimodal_content method (for PDF, Word, Excel)
-            if hasattr(processor, 'extract_multimodal_content'):
-                logger.debug(f"Using extract_multimodal_content for {processor.__class__.__name__}")
+            if hasattr(processor, "extract_multimodal_content"):
+                logger.debug(
+                    f"Using extract_multimodal_content for {processor.__class__.__name__}"
+                )
                 content = processor.extract_multimodal_content(file_path, document_id)
             else:
                 # Fallback: Extract text only (for simple processors like Text, Markdown)
-                logger.debug(f"Using extract_text fallback for {processor.__class__.__name__}")
+                logger.debug(
+                    f"Using extract_text fallback for {processor.__class__.__name__}"
+                )
                 text = processor.extract_text(file_path)
-                
+
                 # Create a TextChunk with the extracted text
-                from src.models.base_models import TextChunk, ChunkType
                 text_chunk = TextChunk(
                     chunk_id=f"{document_id}_chunk_0",
                     text=text,
                     chunk_type=ChunkType.PARAGRAPH,
-                    position=0,
-                    metadata={"source": str(file_path)}
+                    position=None,  # Use None instead of int
+                    metadata={"source": str(file_path)},
                 )
-                
+
                 # Create MultiModalContent with the text chunk
                 content = MultiModalContent(
                     document_id=document_id,
-                    metadata={"processor": processor.__class__.__name__, "source_file": str(file_path)}
+                    metadata={
+                        "processor": processor.__class__.__name__,
+                        "source_file": str(file_path),
+                    },
                 )
                 content.add_text_chunk(text_chunk)
-            
+
             logger.info(f"Successfully processed: {file_path}")
             return content
 
@@ -477,7 +486,7 @@ class ProcessorFactoryBuilder:
     Provides fluent interface for factory configuration.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the builder."""
         self._registry: ProcessorRegistry | None = None
         self._validator: FileValidator | None = None
@@ -588,10 +597,6 @@ class ProcessorFactoryBuilder:
         return factory
 
 
-# Singleton instance for convenience
-_default_factory: ProcessorFactory | None = None
-
-
 def get_default_factory() -> ProcessorFactory:
     """
     Get the default ProcessorFactory singleton.
@@ -599,10 +604,9 @@ def get_default_factory() -> ProcessorFactory:
     Returns:
         Default ProcessorFactory instance
     """
-    global _default_factory
-    if _default_factory is None:
-        _default_factory = ProcessorFactory()
-    return _default_factory
+    if not hasattr(get_default_factory, "_instance"):
+        get_default_factory._instance = ProcessorFactory()  # type: ignore[attr-defined]
+    return get_default_factory._instance  # type: ignore[attr-defined,no-any-return]
 
 
 def process_file(file_path: str, **config: Any) -> MultiModalContent | None:

@@ -107,8 +107,8 @@ where = ["src"]
 
 # Black configuration
 [tool.black]
-line-length = 120
-target-version = ['py311']
+line-length = 88
+target-version = ['py313']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -122,13 +122,16 @@ exclude = '''
   | buck-out
   | build
   | dist
+  | data
+  | logs
 )/
 '''
 
 # Ruff configuration
 [tool.ruff]
-target-version = "py311"
-line-length = 120
+target-version = "py313"
+line-length = 88
+fix = true
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -137,20 +140,23 @@ select = [
     "B",  # flake8-bugbear
     "C4", # flake8-comprehensions
     "UP", # pyupgrade
+    "S",  # bandit security
 ]
 ignore = [
     "E501",  # line too long, handled by black
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
+    "S101",  # use of assert detected (pytest uses asserts)
 ]
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*" = ["B011"]
+"tests/**/*" = ["B011", "S101", "S105", "S106"]
+"scripts/**/*" = ["S101", "S105", "S106"]
 
 # MyPy configuration
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_incomplete_defs = true
@@ -160,6 +166,8 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_return_any = true
 strict_optional = true
+install_types = true
+non_interactive = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -188,6 +196,40 @@ ignore_errors = true
 module = "scripts.*"
 ignore_errors = true
 disallow_untyped_defs = false
+
+# isort configuration
+[tool.isort]
+profile = "black"
+line_length = 88
+filter_files = true
+known_first_party = ["src"]
+known_third_party = [
+    "fastapi",
+    "pydantic",
+    "sqlalchemy",
+    "lancedb",
+    "sentence_transformers",
+    "transformers",
+    "torch",
+    "numpy",
+    "pandas",
+    "fitz",
+    "openpyxl",
+    "pypdf",
+    "python_docx"
+]
+skip_glob = [
+    "**/.venv/*",
+    "**/venv/*",
+    "**/__pycache__/*",
+    "**/data/*",
+    "**/logs/*"
+]
+
+# Bandit security configuration
+[tool.bandit]
+exclude_dirs = ["tests", "scripts"]
+skips = ["B101", "B601"]  # Skip assert_used and paramiko_calls
 
 # Pytest configuration
 [tool.pytest.ini_options]

@@ -1,6 +1,6 @@
 # Debug Logging System
 
-A comprehensive debug logging system designed specifically for the PDF processing pipeline, providing detailed tracing, performance metrics, and visual debugging aids.
+A comprehensive debug logging system designed specifically for the PDF processing pipeline, providing detailed tracing, performance metrics, and visual debugging aids. **The system automatically detects production environments and minimizes logging overhead for optimal production performance.**
 
 ## Features
 
@@ -9,6 +9,12 @@ A comprehensive debug logging system designed specifically for the PDF processin
 - **Data preview**: Inspect data structures with intelligent previews
 - **Performance tracking**: Automatic timing and performance analysis
 - **Error context**: Enhanced error reporting with full context
+
+### 🏭 **Production Environment Detection (NEW)**
+- **Automatic detection**: Recognizes production environments via environment variables
+- **Smart defaults**: Debug logging automatically disabled in production
+- **Performance optimized**: Zero debug overhead when production detected
+- **Override capability**: Manual control when needed
 
 ### 📊 Specialized Content Logging
 - **Image processing**: Detailed image extraction logging with dimensions, formats, and sizes
@@ -22,7 +28,70 @@ A comprehensive debug logging system designed specifically for the PDF processin
 - **Memory tracking**: Monitor memory usage during processing
 - **Bottleneck identification**: Identify slow operations
 
-## Quick Start
+## Production Environment Detection
+
+The debug logging system automatically detects production environments and adjusts its behavior accordingly. This ensures optimal performance in production while maintaining full debugging capabilities in development.
+
+### Automatic Detection
+
+The system checks for these common production indicators:
+
+**Environment Variables:**
+- `ENVIRONMENT=production` or `ENVIRONMENT=prod`
+- `ENV=production` or `ENV=prod`
+- `NODE_ENV=production`
+- `FLASK_ENV=production`
+- `DJANGO_ENV=production`
+- `PYTHON_ENV=production`
+- `DEBUG=false` or `DEBUG=0` or `DEBUG=no`
+- `DEBUG_MODE=false`
+
+**Cloud Platform Indicators:**
+- `KUBERNETES_SERVICE_HOST` (Kubernetes deployment)
+- `AWS_EXECUTION_ENV` (AWS Lambda)
+- `GOOGLE_CLOUD_PROJECT` (Google Cloud)
+- `AZURE_FUNCTIONS_ENVIRONMENT` (Azure Functions)
+
+### Production Mode Behavior
+
+When production environment is detected:
+- **Debug Level**: Automatically set to "ERROR" (only errors logged)
+- **Detailed Logging**: Disabled (no stage, data, or performance logging)
+- **Image/Table/Equation Logging**: Disabled
+- **Performance Reports**: Disabled
+- **Memory Overhead**: Minimized
+
+### Manual Override
+
+You can override automatic detection:
+
+```python
+# Force enable debug logging even in production
+config = DebugConfig(enabled=True, auto_detect_production=False)
+
+# Force disable debug logging even in development
+config = DebugConfig(enabled=False, auto_detect_production=False)
+
+# Use automatic detection (default)
+config = DebugConfig()  # enabled=None, auto_detect_production=True
+```
+
+### Check Current Environment
+
+```python
+from src.core.debug_logger import DebugConfig, is_production
+
+# Quick check
+if is_production():
+    print("Running in production mode")
+
+# Detailed environment info
+config = DebugConfig()
+env_info = config.get_environment_info()
+print(f"Environment: {env_info['environment_type']}")
+print(f"Debug enabled: {env_info['debug_enabled']}")
+```
+
 
 ### 1. Basic Usage
 
@@ -87,25 +156,25 @@ debug_logger = init_debug_logging(config)
 ```python
 # Image processing
 debug_logger.debug_image_processing(
-    image_index=1, xref=12345, width=800, height=600, 
+    image_index=1, xref=12345, width=800, height=600,
     format_type="PNG", size_bytes=1024*1024
 )
 
-# Table processing  
+# Table processing
 debug_logger.debug_table_processing(
-    table_index=1, rows=10, cols=5, 
+    table_index=1, rows=10, cols=5,
     headers=["Name", "Age", "City"]
 )
 
 # Equation processing
 debug_logger.debug_equation_processing(
-    eq_index=1, eq_type="LaTeX", 
+    eq_index=1, eq_type="LaTeX",
     latex_code=r"\\frac{x^2}{y}"
 )
 
 # Text chunking
 debug_logger.debug_chunking(
-    chunk_index=1, chunk_size=500, 
+    chunk_index=1, chunk_size=500,
     chunk_type="semantic", overlap_size=50
 )
 ```
@@ -235,8 +304,8 @@ content = processor.extract_multimodal_content("document.pdf", "doc_1")
 Always provide context in debug operations:
 
 ```python
-with debug_logger.debug_operation("Process PDF", 
-                                 file_path=path, 
+with debug_logger.debug_operation("Process PDF",
+                                 file_path=path,
                                  document_id=doc_id):
     # Processing code
 ```
@@ -258,7 +327,7 @@ Disable debug logging in production:
 # Development
 processor = PDFProcessor(debug=True, debug_level="DEBUG")
 
-# Production  
+# Production
 processor = PDFProcessor(debug=False)
 ```
 

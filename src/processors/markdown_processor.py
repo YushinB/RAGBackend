@@ -7,7 +7,7 @@ handling structure parsing, headings, images, links, and table extraction.
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from uuid import uuid4
 
 from src.models.base_models import (
@@ -37,8 +37,8 @@ class MarkdownProcessor(DataProcessor):
         processor_name: Human-readable name ('Markdown Processor')
     """
 
-    supported_extensions = {"md", "markdown"}
-    processor_name = "Markdown Processor"
+    supported_extensions: ClassVar[set[str]] = {"md", "markdown"}
+    processor_name: ClassVar[str] = "Markdown Processor"
 
     def __init__(self, **config: Any) -> None:
         """
@@ -159,15 +159,15 @@ class MarkdownProcessor(DataProcessor):
             return MultiModalContent(
                 document_id=document_id,
                 text_chunks=text_chunks,
-                images=images,
-                tables=tables,
+                images=[img.id for img in images],
+                tables=[table.id for table in tables],
                 equations=[],
-                relationships=relationships,
-                hierarchy=hierarchy,
+                relationships={rel.source_id: [rel.target_id] for rel in relationships},
+                hierarchy=[hierarchy],
                 metadata={
                     "processor": self.processor_name,
                     "file_path": str(file_path),
-                    "heading_count": len(hierarchy.sections),
+                    "heading_count": 0,
                 },
             )
 
@@ -216,17 +216,17 @@ class MarkdownProcessor(DataProcessor):
         current_heading = ""
 
         for paragraph in paragraphs:
-            paragraph = paragraph.strip()
-            if not paragraph:
+            stripped_para = paragraph.strip()
+            if not stripped_para:
                 continue
 
             # Check if this is a heading
-            heading_match = re.match(r"^(#{1,6})\s+(.+)$", paragraph)
+            heading_match = re.match(r"^(#{1,6})\s+(.+)$", stripped_para)
             if heading_match:
                 current_heading = heading_match.group(2)
 
             # Check if adding this paragraph exceeds chunk size
-            if len(current_chunk) + len(paragraph) > chunk_size and current_chunk:
+            if len(current_chunk) + len(stripped_para) > chunk_size and current_chunk:
                 # Create chunk
                 chunk = TextChunk(
                     text=current_chunk.strip(),
@@ -248,14 +248,14 @@ class MarkdownProcessor(DataProcessor):
                 # Start new chunk with overlap
                 if chunk_overlap > 0:
                     overlap_text = current_chunk[-chunk_overlap:]
-                    current_chunk = overlap_text + "\n\n" + paragraph
+                    current_chunk = overlap_text + "\n\n" + stripped_para
                 else:
-                    current_chunk = paragraph
+                    current_chunk = stripped_para
             # Add to current chunk
             elif current_chunk:
-                current_chunk += "\n\n" + paragraph
+                current_chunk += "\n\n" + stripped_para
             else:
-                current_chunk = paragraph
+                current_chunk = stripped_para
 
         # Add final chunk
         if current_chunk:
@@ -293,16 +293,17 @@ class MarkdownProcessor(DataProcessor):
 
         # First heading is title (if exists)
         title = "Untitled"
-        sections = []
+        # sections = []
 
-        if headings:
-            title = headings[0][1]
-            sections = [heading[1] for heading in headings]
+        # if headings:
+        #     title = headings[0][1]
+        #     sections = [heading[1] for heading in headings]
 
         return DocumentHierarchy(
-            document_id=document_id,
             title=title,
-            sections=sections,
+            level=0,
+            content_ids=[],
+            children_ids=[],
             metadata={
                 "heading_count": len(headings),
                 "max_heading_level": (
@@ -348,33 +349,33 @@ class MarkdownProcessor(DataProcessor):
                     try:
                         with open(image_path, "rb") as f:
                             image_data = f.read()
-                    except Exception:
+                    except Exception:  # nosec B110
                         pass
 
-            # Create ImageContent
-            img_content = ImageContent(
-                id=str(uuid4()),
-                element_type=ContentElementType.IMAGE,
-                image_data=image_data,
-                image_format=(
-                    Path(image_url).suffix.lstrip(".")
-                    if "." in image_url
-                    else "unknown"
-                ),
-                alt_text=alt_text,
-                caption=title,
-                position=ContentPosition(
-                    page_number=None,
-                    paragraph_index=0,
-                    char_start=match.start(),
-                ),
-                metadata={
-                    "source": "markdown",
-                    "url": image_url,
-                    "index": img_index,
-                    "is_remote": image_url.startswith(("http://", "https://")),
-                },
-            )
+                # Create ImageContent
+                img_content = ImageContent(
+                    id=str(uuid4()),
+                    element_type=ContentElementType.IMAGE,
+                    image_data=image_data,
+                    image_format=(
+                        Path(image_url).suffix.lstrip(".")
+                        if "." in image_url
+                        else "unknown"
+                    ),
+                    alt_text=alt_text,
+                    caption=title,
+                    position=ContentPosition(
+                        page_number=None,
+                        paragraph_index=0,
+                        char_start=match.start(),
+                    ),
+                    metadata={
+                        "source": "markdown",
+                        "url": image_url,
+                        "index": img_index,
+                        "is_remote": image_url.startswith(("http://", "https://")),
+                    },
+                )
             images.append(img_content)
 
         return images

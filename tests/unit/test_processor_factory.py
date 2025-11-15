@@ -319,9 +319,11 @@ class TestProcessorFactory:
         """Test processing unsupported file raises error."""
         factory = ProcessorFactory()
 
-        with patch.object(Path, "exists", return_value=True):
-            with pytest.raises(ValueError, match="No processor found"):
-                factory.process_file("test.unknown")
+        with (
+            patch.object(Path, "exists", return_value=True),
+            pytest.raises(ValueError, match="No processor found"),
+        ):
+            factory.process_file("test.unknown")
 
 
 class TestProcessorFactoryBuilder:
@@ -469,8 +471,8 @@ class TestProcessorFactoryIntegration:
         processor_upper = factory.get_processor_for_file("doc.PDF")
         processor_mixed = factory.get_processor_for_file("doc.PdF")
 
-        assert type(processor_lower) == type(processor_upper)
-        assert type(processor_upper) == type(processor_mixed)
+        assert isinstance(processor_lower, type(processor_upper))
+        assert isinstance(processor_upper, type(processor_mixed))
 
     def test_registry_isolation(self):
         """Test that different factories have isolated registries."""
